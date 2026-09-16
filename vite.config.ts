@@ -86,7 +86,7 @@ export default defineConfig(({ mode }) => {
       VitePWA({
         registerType: 'autoUpdate',
         injectRegister: 'auto',
-        includeAssets: ['logo.svg', 'favicon.ico', 'apple-touch-icon-180x180.png'],
+        includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png'],
         manifest: {
           id: '/',
           name: 'Penny',
@@ -97,8 +97,8 @@ export default defineConfig(({ mode }) => {
           scope: '/',
           display: 'standalone',
           orientation: 'portrait',
-          background_color: '#14110e',
-          theme_color: '#14110e',
+          background_color: '#f6e9d2',
+          theme_color: '#241a12',
           categories: ['finance'],
           icons: [
             { src: 'pwa-64x64.png', sizes: '64x64', type: 'image/png' },
@@ -118,7 +118,7 @@ export default defineConfig(({ mode }) => {
         workbox: {
           navigateFallback: '/index.html',
           navigateFallbackDenylist: [/^\/api\//, /^\/__\//],
-          globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+          globPatterns: ['**/*.{js,css,html,svg,png,webp,ico,woff2}'],
           cleanupOutdatedCaches: true,
         },
       }),

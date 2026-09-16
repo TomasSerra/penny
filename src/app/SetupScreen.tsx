@@ -1,4 +1,4 @@
-import { LogoMark } from '@/components/brand/Logo'
+import { Penny } from '@/components/brand/Penny'
 import { AmbientBackground } from '@/components/layout/AmbientBackground'
 
 const VARIABLES = [
@@ -14,8 +14,8 @@ export function SetupScreen() {
   return (
     <div className="grid min-h-dvh place-items-center p-4">
       <AmbientBackground />
-      <div className="glass w-full max-w-lg rounded-4xl p-8">
-        <LogoMark className="size-12" />
+      <div className="paper w-full max-w-lg rounded-4xl p-8">
+        <Penny pose="sad" priority className="h-24" />
         <h1 className="mt-5 font-display text-3xl leading-tight">Falta configurar Firebase</h1>
         <p className="mt-3 text-sm text-muted-foreground">
           Copiá <code className="rounded bg-foreground/5 px-1">.env.example</code> a{' '}

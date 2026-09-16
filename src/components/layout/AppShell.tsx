@@ -62,7 +62,7 @@ export function AppShell() {
       <Sidebar />
 
       <header className="flex items-center justify-between px-5 pt-[calc(env(safe-area-inset-top)+0.9rem)] pb-1 md:hidden">
-        <Logo markClassName="size-7" />
+        <Logo markClassName="h-8" />
         <UserMenu compact />
       </header>
 

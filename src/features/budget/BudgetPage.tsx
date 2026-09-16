@@ -1,4 +1,4 @@
-import { Add01Icon, Alert02Icon, Copy01Icon, Delete02Icon, PieChartIcon } from '@hugeicons/core-free-icons'
+import { Add01Icon, Alert02Icon, Copy01Icon, Delete02Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -52,7 +52,7 @@ function ItemsSection({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
-      className="glass @container rounded-4xl p-5 md:p-6"
+      className="paper @container rounded-4xl p-5 md:p-6"
     >
       <header className="mb-3 flex items-start justify-between gap-3">
         <div>
@@ -71,7 +71,7 @@ function ItemsSection({
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="-mx-1 overflow-hidden px-1"
+              className="-mx-1 -mb-1.5 overflow-hidden px-1 pb-1.5"
             >
               {/* Sized by the card, not the viewport: the column is narrow next to the sidebar and summary. */}
               <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 py-1.5 @lg:grid-cols-[minmax(0,1fr)_11rem_auto]">
@@ -168,7 +168,7 @@ function BudgetEditor({ initial, rate, freezeRate }: { initial: Budget; rate: Ra
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-          className="glass rounded-4xl p-5 md:p-6"
+          className="paper rounded-4xl p-5 md:p-6"
         >
           <header className="mb-5">
             <h2 className="font-semibold">Ahorro</h2>
@@ -191,7 +191,7 @@ function BudgetEditor({ initial, rate, freezeRate }: { initial: Budget; rate: Ra
         </motion.section>
       </div>
 
-      <aside className="glass flex flex-col gap-5 rounded-4xl p-5 md:p-6 lg:sticky lg:top-10">
+      <aside className="paper flex flex-col gap-5 rounded-4xl p-5 md:p-6 lg:sticky lg:top-10">
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>Ingreso neto</span>
           <AnimatePresence mode="wait">
@@ -252,9 +252,9 @@ export default function BudgetPage() {
       ) : budget ? (
         <BudgetEditor key={month} initial={budget} rate={rate} freezeRate={isPast} />
       ) : (
-        <div className="glass rounded-4xl">
+        <div className="paper rounded-4xl">
           <EmptyState
-            icon={PieChartIcon}
+            pose="rock"
             title={`Armá el presupuesto de ${formatMonth(month, { year: false }).toLowerCase()}`}
             description="Cargá tus ingresos, gastos fijos y cuánto querés ahorrar. Penny calcula cuánto te queda para gastar."
             action={

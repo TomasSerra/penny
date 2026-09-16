@@ -1,5 +1,3 @@
-import { ArrowRight01Icon } from '@hugeicons/core-free-icons'
-import { HugeiconsIcon } from '@hugeicons/react'
 import { motion } from 'motion/react'
 import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
@@ -12,15 +10,17 @@ import { useSession } from '@/app/session'
 import { Money } from '@/components/common/Money'
 import { MonthPicker } from '@/components/common/MonthPicker'
 import { PageHeader } from '@/components/common/PageHeader'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useExpensesBetween } from '@/data/expenses'
 import { AllocationBar, AllocationLegend } from '@/features/budget/allocation'
 import { useBudgetSummary } from '@/features/budget/useBudgetSummary'
 import { CurrencyToggle } from '@/features/expenses/fields'
-import { ExpenseRow } from '@/features/expenses/ExpenseRow'
+import { OnboardingCard } from '@/features/onboarding/OnboardingCard'
+import { useOnboarding } from '@/features/onboarding/OnboardingProvider'
 import { useDisplayName } from '@/components/layout/UserMenu'
 import { useMonthParam } from '@/hooks/useMonthParam'
-import { formatDate, formatMoney, formatShortMonth } from '@/lib/format'
+import { formatDate, formatMonth, formatMoney, formatShortMonth } from '@/lib/format'
 import { CategoryBreakdown } from './CategoryBreakdown'
 import { CumulativeChart, type CumulativeDatum } from './CumulativeChart'
 import { MonthlyChart, type MonthlyDatum } from './MonthlyChart'
@@ -61,6 +61,7 @@ function greeting(hour: number) {
 
 export default function DashboardPage() {
   const { uid } = useSession()
+  const { needsSetup } = useOnboarding()
   const firstName = useDisplayName().split(' ')[0]
   const [month, setMonth] = useMonthParam()
   const [currency, setCurrency] = useDisplayCurrency()
@@ -98,8 +99,6 @@ export default function DashboardPage() {
     })
   }, [monthly, currentMonth])
 
-  const recent = monthExpenses.slice(0, 5)
-
   return (
     <>
       <PageHeader
@@ -113,24 +112,29 @@ export default function DashboardPage() {
         }
       />
 
-      {/* Three columns only when there is real room next to the sidebar; below that, category and recent pair up. */}
+      {needsSetup && pace && summary && <OnboardingCard className="mb-4" />}
+
+      {/* Three columns only when there is real room next to the sidebar; below that, cards stack in pairs. */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <Reveal index={0} className="md:col-span-2">
           {budgetLoading ? (
             <Skeleton className="h-72 rounded-4xl" />
           ) : pace && summary ? (
             <PaceHero pace={pace} currency={currency} convert={convert} />
+          ) : needsSetup ? (
+            // Same invitation as the banner: with nothing loaded yet, it is the whole hero.
+            <OnboardingCard className="h-full" />
           ) : (
             <PaceHeroEmpty month={month} />
           )}
         </Reveal>
 
         <Reveal index={1} className="md:col-span-2 xl:col-span-1">
-          <section className="glass flex h-full flex-col rounded-4xl p-6">
+          <section className="paper flex h-full flex-col rounded-4xl p-6">
             <p className="text-sm text-muted-foreground">Ingreso neto</p>
             {summary ? (
               <>
-                <Money value={convert(summary.netARS)} currency={currency} animated className="mt-1.5 text-4xl font-semibold tracking-tight" />
+                <Money value={convert(summary.netARS)} currency={currency} animated className="mt-1.5 font-display text-4xl" />
                 <Money
                   value={currency === 'USD' ? summary.netARS : rateValue ? summary.netARS / rateValue : 0}
                   currency={currency === 'USD' ? 'ARS' : 'USD'}
@@ -158,7 +162,17 @@ export default function DashboardPage() {
                 </dl>
               </>
             ) : (
-              <p className="mt-2 text-sm text-muted-foreground">Sin presupuesto cargado.</p>
+              // Without a budget this card has no numbers to show, so it points at the one screen
+              // that fills it in rather than stating the obvious and stopping there.
+              <div className="mt-2 flex flex-1 flex-col items-start">
+                <p className="text-sm text-balance text-muted-foreground">
+                  Todavía no armaste el presupuesto de {formatMonth(month, { year: false }).toLowerCase()}. Con tus ingresos, gastos fijos y
+                  ahorro cargados, acá vas a ver cuánto te queda libre.
+                </p>
+                <Button asChild variant="outline" className="mt-4">
+                  <Link to={`/presupuesto?mes=${month}`}>Armar presupuesto</Link>
+                </Button>
+              </div>
             )}
             {rate && (
               <p className="mt-auto pt-5 text-xs text-muted-foreground">
@@ -170,7 +184,7 @@ export default function DashboardPage() {
 
         {summary && (
           <Reveal index={2} className="md:col-span-2 xl:col-span-3">
-            <section className="glass rounded-4xl p-5 md:p-6">
+            <section className="paper rounded-4xl p-5 md:p-6">
               <header className="mb-4">
                 <h2 className="font-semibold">Distribución del mes</h2>
                 <p className="text-sm text-muted-foreground">Cómo se reparte tu ingreso neto</p>
@@ -189,29 +203,8 @@ export default function DashboardPage() {
           <CategoryBreakdown expenses={monthExpenses} currency={currency} />
         </Reveal>
 
-        <Reveal index={5} className="order-1 min-w-0 md:col-span-2 xl:order-none">
+        <Reveal index={5} className="min-w-0 md:col-span-2 xl:col-span-3">
           {expensesLoading ? <Skeleton className="h-72 rounded-4xl" /> : <CumulativeChart data={cumulative} currency={currency} year={year} />}
-        </Reveal>
-
-        <Reveal index={6} className="min-w-0">
-          <section className="glass flex h-full flex-col overflow-hidden rounded-4xl">
-            <header className="flex items-center justify-between px-5 pt-5 pb-2 md:px-6 md:pt-6">
-              <h2 className="font-semibold">Últimos gastos</h2>
-              <Link to={`/gastos${month === currentMonth ? '' : `?mes=${month}`}`} className="flex items-center gap-1 text-sm text-penny-ink hover:underline">
-                Ver todos
-                <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
-              </Link>
-            </header>
-            {recent.length === 0 ? (
-              <p className="px-6 pb-6 text-sm text-muted-foreground">Todavía no hay gastos este mes.</p>
-            ) : (
-              <div className="divide-y divide-border pb-2">
-                {recent.map((expense, index) => (
-                  <ExpenseRow key={expense.id} expense={expense} index={index} showDate={formatDate(expense.date)} compact />
-                ))}
-              </div>
-            )}
-          </section>
         </Reveal>
       </div>
     </>

@@ -6,6 +6,7 @@ import { es } from 'react-day-picker/locale'
 import { CATEGORIES, PAYMENT_METHODS } from '@shared/catalog'
 import { arDate, calendarParts } from '@shared/dates'
 import type { CategoryId, Currency, PaymentMethodId } from '@shared/types'
+import { CategoryTile } from '@/components/common/CategoryTile'
 import { SegmentedControl } from '@/components/common/SegmentedControl'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
@@ -92,8 +93,9 @@ export function CurrencyToggle({ value, onChange, size = 'sm' }: { value: Curren
 
 export function CategoryPicker({ value, onChange }: { value: CategoryId | null; onChange: (value: CategoryId) => void }) {
   const layoutId = useId()
+  // Four columns on a phone: with five, labels like "Supermercado" break mid-word.
   return (
-    <div className="grid grid-cols-5 gap-1" role="radiogroup" aria-label="Categoría">
+    <div className="grid grid-cols-4 gap-1 sm:grid-cols-5" role="radiogroup" aria-label="Categoría">
       {CATEGORIES.map((category) => {
         const selected = value === category.id
         return (
@@ -105,20 +107,21 @@ export function CategoryPicker({ value, onChange }: { value: CategoryId | null; 
             whileTap={{ scale: 0.93 }}
             onClick={() => onChange(category.id)}
             className={cn(
-              'relative flex h-[4.6rem] flex-col items-center justify-center gap-1.5 rounded-2xl px-0.5 text-center transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
-              selected ? 'text-foreground' : 'text-muted-foreground hover:bg-foreground/[0.04]',
+              'relative flex h-[4.9rem] flex-col items-center justify-center gap-1.5 rounded-2xl px-0.5 text-center transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+              selected ? 'font-semibold text-ink-stamp' : 'text-muted-foreground hover:bg-foreground/[0.04]',
             )}
           >
             {selected && (
               <motion.span
                 layoutId={layoutId}
                 transition={SELECT_SPRING}
-                className="absolute inset-0 rounded-2xl bg-penny/15 ring-[1.5px] ring-penny/80 ring-inset"
+                className="absolute inset-0 rounded-2xl border-2 border-ink-stamp bg-penny"
               />
             )}
-            <span className={cn('relative text-[1.55rem] leading-none transition-transform duration-300', selected && 'scale-110')}>
-              {category.emoji}
-            </span>
+            <CategoryTile
+              category={category.id}
+              className={cn('relative transition-transform duration-300', selected && 'scale-110')}
+            />
             <span className="relative line-clamp-2 max-w-full text-[10px] leading-[1.15] font-medium tracking-tight break-words hyphens-auto" lang="es">
               {category.label}
             </span>
@@ -144,15 +147,15 @@ export function PaymentPicker({ value, onChange }: { value: PaymentMethodId; onC
             whileTap={{ scale: 0.97 }}
             onClick={() => onChange(method.id)}
             className={cn(
-              'relative flex h-12 items-center gap-2.5 rounded-2xl bg-foreground/[0.03] px-3 text-left text-sm font-medium transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-white/[0.03]',
-              selected ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
+              'relative flex h-12 items-center gap-2.5 rounded-2xl border-2 border-ink/25 px-3 text-left text-sm font-medium transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+              selected ? 'border-transparent font-semibold text-ink-stamp' : 'text-muted-foreground hover:text-foreground',
             )}
           >
             {selected && (
               <motion.span
                 layoutId={layoutId}
                 transition={SELECT_SPRING}
-                className="absolute inset-0 rounded-2xl bg-penny/15 ring-[1.5px] ring-penny/80 ring-inset"
+                className="absolute inset-0 rounded-2xl border-2 border-ink-stamp bg-penny"
               />
             )}
             <span className="relative text-lg leading-none">{method.emoji}</span>
@@ -223,7 +226,7 @@ export function Stepper({
   label: string
 }) {
   return (
-    <div className="glass inline-flex h-11 items-center rounded-full p-1" role="group" aria-label={label}>
+    <div className="paper inline-flex h-11 items-center rounded-full p-1" role="group" aria-label={label}>
       <Button type="button" variant="ghost" size="icon-sm" className="rounded-full" disabled={value <= min} onClick={() => onChange(Math.max(min, value - 1))} aria-label="Menos">
         <HugeiconsIcon icon={MinusSignIcon} strokeWidth={2} />
       </Button>

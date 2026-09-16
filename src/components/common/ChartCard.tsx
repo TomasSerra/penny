@@ -15,7 +15,7 @@ interface ChartCardProps {
 export function ChartCard({ title, description, legend, table, children, className }: ChartCardProps) {
   const [view, setView] = useState<'chart' | 'table'>('chart')
   return (
-    <section className={cn('glass flex min-w-0 flex-col rounded-4xl p-5 md:p-6', className)}>
+    <section className={cn('paper flex min-w-0 flex-col rounded-4xl p-5 md:p-6', className)}>
       <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="font-semibold">{title}</h2>
@@ -65,7 +65,7 @@ export function ChartLegend({ items }: { items: { label: string; color: string; 
 export function DataTable({ columns, rows }: { columns: string[]; rows: ReactNode[][] }) {
   return (
     <table className="w-full text-sm">
-      <thead className="sticky top-0 bg-(--glass-bg-strong) text-xs text-muted-foreground backdrop-blur">
+      <thead className="sticky top-0 bg-(--paper-card) text-xs text-muted-foreground">
         <tr>
           {columns.map((column, index) => (
             <th key={column} className={cn('px-2 py-2 font-medium', index === 0 ? 'text-left' : 'text-right')}>
@@ -97,7 +97,7 @@ export function ChartTooltipBox({
   rows: { label: string; value: ReactNode; color?: string }[]
 }) {
   return (
-    <div className="glass-strong min-w-44 rounded-2xl px-3 py-2.5 text-xs">
+    <div className="paper-raised min-w-44 rounded-2xl px-3 py-2.5 text-xs">
       <p className="mb-1.5 font-medium text-muted-foreground">{title}</p>
       {rows.map((row) => (
         <div key={row.label} className="flex items-center gap-2 py-0.5">

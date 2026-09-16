@@ -27,7 +27,7 @@ export function MonthPicker({ month, onChange, className }: MonthPickerProps) {
   }
 
   return (
-    <div className={cn('glass inline-flex h-11 items-center rounded-full p-1', className)}>
+    <div className={cn('paper inline-flex h-11 items-center rounded-full p-1', className)}>
       <Button variant="ghost" size="icon-sm" className="rounded-full" onClick={() => select(addMonths(month, -1))} aria-label="Mes anterior">
         <HugeiconsIcon icon={ArrowLeft01Icon} strokeWidth={2} />
       </Button>

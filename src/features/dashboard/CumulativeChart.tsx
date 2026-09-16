@@ -1,7 +1,10 @@
 import { Area, AreaChart, CartesianGrid, Tooltip, XAxis, YAxis } from 'recharts'
 import type { Currency, MonthKey } from '@shared/types'
 import { ChartCard, ChartTooltipBox, DataTable } from '@/components/common/ChartCard'
+import { EmptyState } from '@/components/common/EmptyState'
+import { Button } from '@/components/ui/button'
 import { ChartContainer, type ChartConfig } from '@/components/ui/chart'
+import { useExpenseComposer } from '@/features/expenses/ExpenseComposer'
 import { formatAxis, formatMoney, formatMonth } from '@/lib/format'
 
 export interface CumulativeDatum {
@@ -13,8 +16,24 @@ export interface CumulativeDatum {
 const config = { value: { label: 'Acumulado', color: 'var(--chart-1)' } } satisfies ChartConfig
 
 export function CumulativeChart({ data, currency, year }: { data: CumulativeDatum[]; currency: Currency; year: number }) {
+  const composer = useExpenseComposer()
   const lastIndex = data.reduce((last, item, index) => (item.value !== null ? index : last), -1)
   const last = lastIndex >= 0 ? data[lastIndex] : null
+
+  // A line pinned to zero all year reads as a bug, not as "no spending yet".
+  if (!last?.value) {
+    return (
+      <ChartCard title="Gasto acumulado">
+        <EmptyState
+          compact
+          pose="base"
+          title={`Todavía no hay nada que acumular en ${year}`}
+          description="Esta curva suma tus gastos mes a mes, para ver si el año viene más caro o más tranquilo que el anterior."
+          action={<Button variant="outline" onClick={() => composer.open()}>Cargar un gasto</Button>}
+        />
+      </ChartCard>
+    )
+  }
 
   return (
     <ChartCard
@@ -35,7 +54,7 @@ export function CumulativeChart({ data, currency, year }: { data: CumulativeDatu
               <stop offset="100%" stopColor="var(--color-value)" stopOpacity={0.02} />
             </linearGradient>
           </defs>
-          <CartesianGrid vertical={false} stroke="var(--border)" />
+          <CartesianGrid vertical={false} stroke="var(--ink)" strokeOpacity={0.15} />
           <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} interval="preserveStartEnd" fontSize={11} />
           <YAxis tickLine={false} axisLine={false} width={44} fontSize={11} tickFormatter={(value: number) => formatAxis(value, currency)} />
           <Tooltip
@@ -54,7 +73,7 @@ export function CumulativeChart({ data, currency, year }: { data: CumulativeDatu
           <Area
             type="monotone"
             dataKey="value"
-            stroke="var(--color-value)"
+            stroke="var(--ink)"
             strokeWidth={2}
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -64,7 +83,7 @@ export function CumulativeChart({ data, currency, year }: { data: CumulativeDatu
             dot={(props: { cx?: number; cy?: number; index?: number }) =>
               props.index === lastIndex && props.cx !== undefined && props.cy !== undefined ? (
                 <g key="end">
-                  <circle cx={props.cx} cy={props.cy} r={5} fill="var(--color-value)" stroke="var(--background)" strokeWidth={2} />
+                  <circle cx={props.cx} cy={props.cy} r={5} fill="var(--color-value)" stroke="var(--ink)" strokeWidth={2} />
                 </g>
               ) : (
                 <g key={`dot-${props.index}`} />

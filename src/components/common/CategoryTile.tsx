@@ -1,17 +1,32 @@
-import { CATEGORY_BY_ID } from '@shared/catalog'
+import { HugeiconsIcon } from '@hugeicons/react'
 import type { CategoryId } from '@shared/types'
+import { categoryStyle } from '@/lib/categories'
 import { cn } from '@/lib/utils'
 
-export function CategoryTile({ category, className }: { category: CategoryId; className?: string }) {
+const SIZE = {
+  sm: { box: 'size-7 rounded-xl', icon: 'size-4' },
+  md: { box: 'size-11 rounded-2xl', icon: 'size-5.5' },
+} as const
+
+export function CategoryTile({
+  category,
+  size = 'md',
+  className,
+}: {
+  category: CategoryId
+  size?: keyof typeof SIZE
+  className?: string
+}) {
+  const { icon, color } = categoryStyle(category)
+  const dimensions = SIZE[size]
+
   return (
     <span
       aria-hidden
-      className={cn(
-        'grid size-11 shrink-0 place-items-center rounded-2xl bg-foreground/[0.04] text-xl ring-1 ring-foreground/[0.05] ring-inset dark:bg-white/[0.06]',
-        className,
-      )}
+      style={{ backgroundColor: color }}
+      className={cn('grid shrink-0 place-items-center border-2 border-ink text-ink-stamp', dimensions.box, className)}
     >
-      {CATEGORY_BY_ID[category]?.emoji ?? '📦'}
+      <HugeiconsIcon icon={icon} className={dimensions.icon} strokeWidth={2} />
     </span>
   )
 }

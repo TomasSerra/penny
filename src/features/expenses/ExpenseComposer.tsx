@@ -123,7 +123,7 @@ function ExpenseSheet({ open, onOpenChange, expense }: ExpenseSheetProps) {
     localStorage.setItem(LAST_PAYMENT_KEY, paymentMethod)
     const item = CATEGORY_BY_ID[category]
     toast.success(expense ? 'Gasto actualizado' : 'Gasto cargado', {
-      description: `${formatMoney(amount, currency)} · ${item.emoji} ${item.label}${count > 1 ? ` · ${count} cuotas` : ''}`,
+      description: `${formatMoney(amount, currency)} · ${item.label}${count > 1 ? ` · ${count} cuotas` : ''}`,
     })
     onOpenChange(false)
   }
@@ -226,7 +226,7 @@ function ExpenseSheet({ open, onOpenChange, expense }: ExpenseSheetProps) {
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
                 transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                className="-mx-1 overflow-hidden px-1"
+                className="-mx-1 -mb-1.5 overflow-hidden px-1 pb-1.5"
               >
                 <FieldLabel>Cuotas</FieldLabel>
                 <div className="flex flex-wrap items-center gap-2">
@@ -238,7 +238,9 @@ function ExpenseSheet({ open, onOpenChange, expense }: ExpenseSheetProps) {
                       onClick={() => setInstallments(option)}
                       className={cn(
                         'h-9 rounded-full px-3.5 text-sm font-medium tabular-nums transition-colors',
-                        installments === option ? 'bg-penny/20 text-foreground ring-1 ring-penny/60' : 'text-muted-foreground hover:bg-accent',
+                        installments === option
+                          ? 'border-2 border-ink-stamp bg-penny font-semibold text-ink-stamp'
+                          : 'border-2 border-transparent text-muted-foreground hover:bg-accent',
                       )}
                     >
                       {option === 1 ? '1 pago' : option}

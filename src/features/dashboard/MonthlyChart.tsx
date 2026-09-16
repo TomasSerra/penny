@@ -1,7 +1,10 @@
 import { Bar, BarChart, CartesianGrid, LabelList, Tooltip, XAxis, YAxis } from 'recharts'
 import type { Currency, MonthKey } from '@shared/types'
 import { ChartCard, ChartLegend, ChartTooltipBox, DataTable } from '@/components/common/ChartCard'
+import { EmptyState } from '@/components/common/EmptyState'
+import { Button } from '@/components/ui/button'
 import { ChartContainer, type ChartConfig } from '@/components/ui/chart'
+import { useExpenseComposer } from '@/features/expenses/ExpenseComposer'
 import { useIsDesktop } from '@/hooks/useMediaQuery'
 import { formatAxis, formatCompact, formatMoney, formatMonth } from '@/lib/format'
 
@@ -37,7 +40,17 @@ function Segment({ x = 0, y = 0, width = 0, height = 0, fill, top, dimmed }: Seg
   if (h <= 0 || width <= 0) return null
   const r = top ? Math.min(RADIUS, width / 2, h) : 0
   const path = `M${x},${offsetY + h} V${offsetY + r} Q${x},${offsetY} ${x + r},${offsetY} H${x + width - r} Q${x + width},${offsetY} ${x + width},${offsetY + r} V${offsetY + h} Z`
-  return <path d={path} fill={fill} fillOpacity={dimmed ? 0.45 : 1} className="transition-[fill-opacity] duration-300" />
+  return (
+    <path
+      d={path}
+      fill={fill}
+      fillOpacity={dimmed ? 0.45 : 1}
+      stroke="var(--ink)"
+      strokeWidth={2}
+      strokeLinejoin="round"
+      className="transition-[fill-opacity] duration-300"
+    />
+  )
 }
 
 export function MonthlyChart({
@@ -52,13 +65,33 @@ export function MonthlyChart({
   onSelect: (month: MonthKey) => void
 }) {
   const desktop = useIsDesktop()
+  const composer = useExpenseComposer()
   const selectedIndex = data.findIndex((item) => item.key === selected)
   const money = (value: number) => formatMoney(value, currency)
+  // Twelve empty months draw a grid with nothing in it, which says less than a sentence does.
+  const year = selected.slice(0, 4)
+  const empty = data.every((item) => item.total === 0)
+
+  if (empty) {
+    return (
+      <ChartCard className="h-full" title="Gastos por mes">
+        <EmptyState
+          compact
+          className="my-auto"
+          pose="base"
+          title={`Nada cargado en ${year}`}
+          description="Acá vas a ver mes a mes cuánto gastaste y qué parte no era necesaria. Empieza a llenarse con tu primer gasto."
+          action={<Button variant="outline" onClick={() => composer.open()}>Cargar un gasto</Button>}
+        />
+      </ChartCard>
+    )
+  }
 
   return (
     <ChartCard
+      className="h-full"
       title="Gastos por mes"
-      description={`${selected.slice(0, 4)} · tocá un mes para verlo`}
+      description={`${year} · tocá un mes para verlo`}
       legend={<ChartLegend items={[{ label: 'Necesario', color: 'var(--chart-1)' }, { label: 'No necesario', color: 'var(--chart-2)' }]} />}
       table={
         <DataTable
@@ -67,9 +100,9 @@ export function MonthlyChart({
         />
       }
     >
-      <ChartContainer config={config} className="aspect-auto h-64 w-full">
+      <ChartContainer config={config} className="aspect-auto h-full w-full min-h-64 flex-1">
         <BarChart data={data} margin={{ top: 24, right: 0, left: 0, bottom: 0 }} barCategoryGap="30%">
-          <CartesianGrid vertical={false} stroke="var(--border)" />
+          <CartesianGrid vertical={false} stroke="var(--ink)" strokeOpacity={0.15} />
           <XAxis
             dataKey="label"
             tickLine={false}
