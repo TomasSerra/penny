@@ -3,7 +3,7 @@
   "framework": "vite",
   "buildCommand": "pnpm build",
   "outputDirectory": "dist",
-  "rewrites": [{ "source": "/((?!api/|__/).*)", "destination": "/index.html" }],
+  "rewrites": [{ "source": "/((?!api/|__/|assets/).*)", "destination": "/index.html" }],
   "headers": [
     {
       "source": "/sw.js",

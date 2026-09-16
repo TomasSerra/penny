@@ -2,15 +2,19 @@ import { isRouteErrorResponse, useRouteError } from 'react-router'
 import { Penny } from '@/components/brand/Penny'
 import { AmbientBackground } from '@/components/layout/AmbientBackground'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
-/** Route-level catch-all, so a render error shows Penny instead of a blank page. */
-export function ErrorScreen() {
+/**
+ * Route-level catch-all, so a render error shows Penny instead of a blank page.
+ * `inShell` is for page routes: it fills what the app shell leaves free, so the page never scrolls.
+ */
+export function ErrorScreen({ inShell = false }: { inShell?: boolean }) {
   const error = useRouteError()
   const notFound = isRouteErrorResponse(error) && error.status === 404
 
   return (
-    <div className="grid min-h-(--app-height) place-items-center p-4">
-      <AmbientBackground />
+    <div className={cn('grid place-items-center', inShell ? 'flex-1' : 'min-h-(--app-height) p-4')}>
+      {!inShell && <AmbientBackground />}
       <div className="paper-flat flex w-full max-w-md flex-col items-center rounded-4xl p-8 text-center">
         <Penny pose="sad" priority className="h-36 -rotate-2" />
         <h1 className="mt-4 font-display text-3xl leading-tight">
