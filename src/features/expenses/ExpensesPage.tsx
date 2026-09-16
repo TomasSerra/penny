@@ -5,6 +5,7 @@ import { MonthPicker } from '@/components/common/MonthPicker'
 import { PageHeader } from '@/components/common/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useIsDesktop } from '@/hooks/useMediaQuery'
 import { useMonthParam } from '@/hooks/useMonthParam'
 import { useExpenseComposer } from './ExpenseComposer'
 import { InstallmentsTab } from './InstallmentsTab'
@@ -22,6 +23,7 @@ export default function ExpensesPage() {
   const [params, setParams] = useSearchParams()
   const [month, setMonth] = useMonthParam()
   const composer = useExpenseComposer()
+  const desktop = useIsDesktop()
   const raw = params.get('tab')
   const tab: Tab = TABS.includes(raw as Tab) ? (raw as Tab) : 'movimientos'
 
@@ -38,17 +40,22 @@ export default function ExpensesPage() {
 
   return (
     <>
+      {/* On a phone the month lives in the movements summary and the add button in the nav bar,
+          so the header is just the title. */}
       <PageHeader
         title="Gastos"
-        eyebrow="Todo lo que sale, en un solo lugar"
+        eyebrow={desktop ? 'Todo lo que sale, en un solo lugar' : undefined}
+        className="mb-5"
         actions={
-          <>
-            {tab === 'movimientos' && <MonthPicker month={month} onChange={setMonth} />}
-            <Button className="hidden h-11 md:inline-flex" onClick={() => composer.open()}>
-              <HugeiconsIcon icon={Add01Icon} strokeWidth={2.2} />
-              Nuevo gasto
-            </Button>
-          </>
+          desktop && (
+            <>
+              {tab === 'movimientos' && <MonthPicker month={month} onChange={setMonth} />}
+              <Button className="h-11" onClick={() => composer.open()}>
+                <HugeiconsIcon icon={Add01Icon} strokeWidth={2.2} />
+                Nuevo gasto
+              </Button>
+            </>
+          )
         }
       />
 
@@ -68,7 +75,7 @@ export default function ExpensesPage() {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="movimientos" className="flex flex-col">
-          <MovementsTab month={month} />
+          <MovementsTab month={month} onMonthChange={setMonth} />
         </TabsContent>
         <TabsContent value="cuotas" className="flex flex-col">
           <InstallmentsTab />

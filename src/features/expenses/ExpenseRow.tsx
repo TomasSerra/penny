@@ -49,7 +49,9 @@ export function ExpenseRow({
           <span className="truncate">
             {showDate ? `${showDate} · ` : ''}
             {category?.label}
-            {!compact && ` · ${payment?.emoji} ${payment?.label}`}
+            {/* On a phone the label would truncate the line; the emoji alone still tells them apart. */}
+            {!compact && ` · ${payment?.emoji}`}
+            {!compact && <span className="hidden sm:inline"> {payment?.label}</span>}
           </span>
           {compact ? null : expense.installment && (
             <Tag>

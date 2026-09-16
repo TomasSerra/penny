@@ -13,9 +13,11 @@ interface MonthPickerProps {
   month: MonthKey
   onChange: (month: MonthKey) => void
   className?: string
+  /** Without its own paper, for sitting inside a card */
+  bare?: boolean
 }
 
-export function MonthPicker({ month, onChange, className }: MonthPickerProps) {
+export function MonthPicker({ month, onChange, className, bare }: MonthPickerProps) {
   const [direction, setDirection] = useState(0)
   const [open, setOpen] = useState(false)
   const [year, setYear] = useState(() => parseMonthKey(month).year)
@@ -27,7 +29,7 @@ export function MonthPicker({ month, onChange, className }: MonthPickerProps) {
   }
 
   return (
-    <div className={cn('paper inline-flex h-11 items-center rounded-full p-1', className)}>
+    <div className={cn('inline-flex h-11 items-center rounded-full p-1', bare ? 'justify-between' : 'paper', className)}>
       <Button variant="ghost" size="icon-sm" className="rounded-full" onClick={() => select(addMonths(month, -1))} aria-label="Mes anterior">
         <HugeiconsIcon icon={ArrowLeft01Icon} strokeWidth={2} />
       </Button>

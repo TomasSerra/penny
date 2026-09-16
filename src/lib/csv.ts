@@ -44,11 +44,25 @@ export function expensesToCsv(expenses: Expense[]): string {
   return `﻿${[header, ...rows].map((row) => row.map(cell).join(',')).join('\n')}`
 }
 
-export function downloadFile(filename: string, content: string, type = 'text/csv;charset=utf-8') {
-  const url = URL.createObjectURL(new Blob([content], { type }))
+export async function saveFile(filename: string, content: string, type = 'text/csv') {
+  const file = new File([content], filename, { type })
+  // A standalone iOS PWA has no downloads: <a download> opens a Quick Look preview that fires
+  // `pagehide`, and Firestore shuts itself down on it (see lib/firebase). The share sheet keeps
+  // the page alive and still offers "Guardar en Archivos".
+  if (window.matchMedia('(pointer: coarse)').matches && navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file] })
+      return
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return
+    }
+  }
+
+  const url = URL.createObjectURL(file)
   const link = Object.assign(document.createElement('a'), { href: url, download: filename })
   document.body.append(link)
   link.click()
   link.remove()
-  URL.revokeObjectURL(url)
+  // Revoking right away can cancel the download before the browser reads the blob.
+  setTimeout(() => URL.revokeObjectURL(url), 60_000)
 }
