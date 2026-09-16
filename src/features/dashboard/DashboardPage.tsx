@@ -198,7 +198,7 @@ export default function DashboardPage() {
         )}
 
         <Reveal index={3} className="min-w-0 md:col-span-2">
-          {expensesLoading ? <Skeleton className="h-80 rounded-4xl" /> : <MonthlyChart data={monthly} selected={month} currency={currency} onSelect={setMonth} />}
+          {expensesLoading ? <Skeleton className="h-80 rounded-4xl" /> : <MonthlyChart data={monthly} selected={month} currency={currency} />}
         </Reveal>
 
         <Reveal index={4} className="min-w-0">

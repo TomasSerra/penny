@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { ChartContainer, type ChartConfig } from '@/components/ui/chart'
 import { useExpenseComposer } from '@/features/expenses/ExpenseComposer'
 import { useIsDesktop } from '@/hooks/useMediaQuery'
-import { formatAxis, formatCompact, formatMoney, formatMonth } from '@/lib/format'
+import { currencySymbol, formatAxis, formatMoney, formatMonth } from '@/lib/format'
+import { cn } from '@/lib/utils'
 
 export interface MonthlyDatum {
   key: MonthKey
@@ -57,16 +58,13 @@ export function MonthlyChart({
   data,
   selected,
   currency,
-  onSelect,
 }: {
   data: MonthlyDatum[]
   selected: MonthKey
   currency: Currency
-  onSelect: (month: MonthKey) => void
 }) {
   const desktop = useIsDesktop()
   const composer = useExpenseComposer()
-  const selectedIndex = data.findIndex((item) => item.key === selected)
   const money = (value: number) => formatMoney(value, currency)
   // Twelve empty months draw a grid with nothing in it, which says less than a sentence does.
   const year = selected.slice(0, 4)
@@ -91,7 +89,7 @@ export function MonthlyChart({
     <ChartCard
       className="h-full"
       title="Gastos por mes"
-      description={`${year} · tocá un mes para verlo`}
+      description={year}
       legend={<ChartLegend items={[{ label: 'Necesario', color: 'var(--chart-1)' }, { label: 'No necesario', color: 'var(--chart-2)' }]} />}
       table={
         <DataTable
@@ -136,8 +134,6 @@ export function MonthlyChart({
             stackId="spend"
             fill="var(--color-necessary)"
             maxBarSize={24}
-            className="cursor-pointer"
-            onClick={(entry) => onSelect((entry.payload as MonthlyDatum).key)}
             shape={(props: SegmentProps) => (
               <Segment {...props} top={(props.payload?.unnecessary ?? 0) <= 0} dimmed={props.payload?.key !== selected} />
             )}
@@ -147,18 +143,24 @@ export function MonthlyChart({
             stackId="spend"
             fill="var(--color-unnecessary)"
             maxBarSize={24}
-            className="cursor-pointer"
-            onClick={(entry) => onSelect((entry.payload as MonthlyDatum).key)}
             shape={(props: SegmentProps) => <Segment {...props} top dimmed={props.payload?.key !== selected} />}
           >
             <LabelList
               dataKey="total"
               content={(props) => {
                 const { index, x = 0, y = 0, width = 0, value } = props as { index?: number; x?: number; y?: number; width?: number; value?: number }
-                if (index !== selectedIndex || !value) return null
+                if (!value) return null
+                const current = data[index ?? -1]?.key === selected
+                // Twelve labels share a phone's width, so they lose the currency symbol there.
+                const label = desktop ? formatAxis(value, currency) : formatAxis(value, currency).replace(currencySymbol(currency), '')
                 return (
-                  <text x={Number(x) + Number(width) / 2} y={Number(y) - 8} textAnchor="middle" className="fill-foreground text-[11px] font-semibold">
-                    {formatCompact(value, currency)}
+                  <text
+                    x={Number(x) + Number(width) / 2}
+                    y={Number(y) - 6}
+                    textAnchor="middle"
+                    className={cn(desktop ? 'text-[11px]' : 'text-[9px]', current ? 'fill-foreground font-semibold' : 'fill-muted-foreground font-medium')}
+                  >
+                    {label}
                   </text>
                 )
               }}

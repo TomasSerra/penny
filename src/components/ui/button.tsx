@@ -1,6 +1,7 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
+import { haptic } from "@/lib/haptics"
 import { Slot } from "radix-ui"
 
 const buttonVariants = cva(
@@ -42,6 +43,7 @@ function Button({
   variant = "default",
   size = "default",
   asChild = false,
+  onClick,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
@@ -55,6 +57,10 @@ function Button({
       data-variant={variant}
       data-size={size}
       className={cn(buttonVariants({ variant, size, className }))}
+      onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+        haptic()
+        onClick?.(event)
+      }}
       {...props}
     />
   )
