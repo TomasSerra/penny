@@ -12,6 +12,21 @@ if (window.matchMedia('(pointer: coarse)').matches) {
   })
 }
 
+// Desktop scrollbars stay hidden until their element scrolls (see index.css).
+if (window.matchMedia('(pointer: fine)').matches) {
+  const timers = new WeakMap<Element, number>()
+  document.addEventListener(
+    'scroll',
+    (event) => {
+      const target = event.target instanceof Element ? event.target : document.documentElement
+      target.setAttribute('data-scrolling', '')
+      window.clearTimeout(timers.get(target))
+      timers.set(target, window.setTimeout(() => target.removeAttribute('data-scrolling'), 800))
+    },
+    { capture: true, passive: true },
+  )
+}
+
 const root = createRoot(document.getElementById('root')!)
 
 // Firebase throws on init without a config, so show setup instructions instead of a blank page.

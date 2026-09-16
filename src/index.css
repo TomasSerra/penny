@@ -326,6 +326,57 @@
     }
   }
 
+  /* Touch screens: no scrollbars at all, like a native app. */
+  @media (pointer: coarse) {
+    * {
+      scrollbar-width: none;
+    }
+
+    *::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  /*
+   * Mouse screens: an inked penny-yellow thumb that only shows while that element
+   * is scrolling. main.tsx sets data-scrolling on the scroller and clears it shortly after.
+   */
+  @media (pointer: fine) {
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-track,
+    ::-webkit-scrollbar-corner {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      border-radius: 999px;
+      background: transparent;
+    }
+
+    [data-scrolling]::-webkit-scrollbar-thumb,
+    ::-webkit-scrollbar-thumb:hover {
+      border: 2px solid var(--ink);
+      background: var(--penny);
+    }
+
+    /* Firefox has no scrollbar pseudo-elements; Chrome would ignore them if scrollbar-color were set. */
+    @supports not selector(::-webkit-scrollbar) {
+      * {
+        scrollbar-width: thin;
+        scrollbar-color: transparent transparent;
+      }
+
+      [data-scrolling] {
+        scrollbar-color: var(--penny) transparent;
+      }
+    }
+  }
+
   input[type="number"]::-webkit-inner-spin-button,
   input[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none;
