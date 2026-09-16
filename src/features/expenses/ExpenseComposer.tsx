@@ -167,6 +167,7 @@ function ExpenseSheet({ open, onOpenChange, expense }: ExpenseSheetProps) {
         open={open}
         onOpenChange={onOpenChange}
         title={expense ? 'Editar gasto' : 'Nuevo gasto'}
+        className="lg:max-w-[60rem]"
         footer={
           <div className="flex w-full gap-2">
             {expense && (
@@ -187,116 +188,121 @@ function ExpenseSheet({ open, onOpenChange, expense }: ExpenseSheetProps) {
           </div>
         }
       >
-        <form id={formId} onSubmit={handleSubmit} className="flex flex-col gap-5">
-          <div className="flex flex-col items-center pt-1">
-            <CurrencyToggle value={currency} onChange={setCurrency} />
-            <label className="mt-3 flex w-full items-baseline justify-center gap-1.5">
-              <span className="text-2xl font-medium text-muted-foreground">{currencySymbol(currency)}</span>
-              <input
-                autoFocus={desktop && !expense}
-                inputMode="decimal"
-                autoComplete="off"
-                placeholder="0"
-                aria-label="Monto"
-                value={amountText}
-                onChange={(event) => setAmountText(formatAmountInput(event.target.value, amountText))}
-                style={{ width: `${Math.max(1, amountText.length) * 0.6 + 0.3}em` }}
-                className="max-w-full min-w-[1ch] bg-transparent text-center text-[3.25rem] leading-none font-semibold tracking-tight tabular-nums caret-penny outline-none placeholder:text-muted-foreground/35"
-              />
-            </label>
-            <p className="mt-2 h-4 text-xs text-muted-foreground tabular-nums">
-              {conversion && (
-                <>
-                  {conversion} · {effectiveRate && rateLabel(effectiveRate)}
-                </>
-              )}
-            </p>
-            {showErrors && amount <= 0 && <FieldError>Ingresá un monto</FieldError>}
-          </div>
-
-          <div>
-            <FieldLabel htmlFor={`${formId}-description`}>Descripción</FieldLabel>
-            <Input
-              id={`${formId}-description`}
-              value={description}
-              maxLength={200}
-              onChange={(event) => setDescription(event.target.value)}
-              placeholder={category ? CATEGORY_BY_ID[category].label : '¿En qué gastaste?'}
-            />
-          </div>
-
-          <div>
-            <FieldLabel>Categoría</FieldLabel>
-            <CategoryPicker value={category} onChange={setCategory} />
-            {showErrors && !category && <FieldError>Elegí una categoría</FieldError>}
-          </div>
-
-          <div>
-            <FieldLabel>Medio de pago</FieldLabel>
-            <PaymentPicker value={paymentMethod} onChange={setPaymentMethod} />
-          </div>
-
-          <AnimatePresence initial={false}>
-            {paymentMethod === 'credit' && (
-              <motion.div
-                key="installments"
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                className="-mx-1 -mb-1.5 overflow-hidden px-1 pb-1.5"
-              >
-                <FieldLabel>¿Cuándo lo pagás?</FieldLabel>
-                <SegmentedControl<string>
-                  stretch
-                  value={String(cardMonthOffset)}
-                  onChange={(value) => setCardMonthOffset(value === '2' ? 2 : 1)}
-                  options={([1, 2] as const).map((offset) => ({
-                    value: String(offset),
-                    label: formatMonth(addMonths(monthKeyOf(date), offset), { year: false }),
-                  }))}
+        {/* Two columns on wide screens so the whole form fits without scrolling. */}
+        <form id={formId} onSubmit={handleSubmit} className="flex flex-col gap-5 lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-10">
+          <div className="flex flex-col gap-5">
+            <div className="flex flex-col items-center pt-1">
+              <CurrencyToggle value={currency} onChange={setCurrency} />
+              <label className="mt-3 flex w-full items-baseline justify-center gap-1.5">
+                <span className="text-2xl font-medium text-muted-foreground">{currencySymbol(currency)}</span>
+                <input
+                  autoFocus={desktop && !expense}
+                  inputMode="decimal"
+                  autoComplete="off"
+                  placeholder="0"
+                  aria-label="Monto"
+                  value={amountText}
+                  onChange={(event) => setAmountText(formatAmountInput(event.target.value, amountText))}
+                  style={{ width: `${Math.max(1, amountText.length) * 0.6 + 0.3}em` }}
+                  className="max-w-full min-w-[1ch] bg-transparent text-center text-[3.25rem] leading-none font-semibold tracking-tight tabular-nums caret-penny outline-none placeholder:text-muted-foreground/35"
                 />
-                <p className="mt-2 text-xs text-muted-foreground">El gasto cuenta en el mes en que lo pagás, no en el de la compra.</p>
-
-                <FieldLabel className="mt-5">Cuotas</FieldLabel>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Stepper label="Cantidad de cuotas" value={installments} onChange={setInstallments} min={1} max={MAX_INSTALLMENTS} />
-                  {QUICK_INSTALLMENTS.map((option) => (
-                    <button
-                      key={option}
-                      type="button"
-                      onClick={() => setInstallments(option)}
-                      className={cn(
-                        'h-9 rounded-full px-3.5 text-sm font-medium tabular-nums transition-colors',
-                        installments === option
-                          ? 'border-2 border-ink-stamp bg-penny font-semibold text-ink-stamp'
-                          : 'border-2 border-transparent text-muted-foreground hover:bg-accent',
-                      )}
-                    >
-                      {option === 1 ? '1 pago' : option}
-                    </button>
-                  ))}
-                </div>
-                {count > 1 && drafts.length > 0 && (
-                  <p className="mt-2.5 text-sm text-muted-foreground">
-                    <span className="font-medium text-foreground tabular-nums">
-                      {count} × {formatMoney(drafts[0].amount, currency, { cents: currency === 'USD' })}
-                    </span>{' '}
-                    · de {formatMonth(drafts[0].month).toLowerCase()} a {formatMonth(drafts[drafts.length - 1].month).toLowerCase()}
-                  </p>
+              </label>
+              <p className="mt-2 h-4 text-xs text-muted-foreground tabular-nums">
+                {conversion && (
+                  <>
+                    {conversion} · {effectiveRate && rateLabel(effectiveRate)}
+                  </>
                 )}
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <FieldLabel>¿Era necesario?</FieldLabel>
-              <NecessaryPicker value={necessary} onChange={setNecessary} />
+              </p>
+              {showErrors && amount <= 0 && <FieldError>Ingresá un monto</FieldError>}
             </div>
+
             <div>
-              <FieldLabel>{paymentMethod === 'credit' ? 'Fecha de compra' : 'Fecha'}</FieldLabel>
-              <DateField value={date} onChange={setDate} />
+              <FieldLabel htmlFor={`${formId}-description`}>Descripción</FieldLabel>
+              <Input
+                id={`${formId}-description`}
+                value={description}
+                maxLength={200}
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder={category ? CATEGORY_BY_ID[category].label : '¿En qué gastaste?'}
+              />
+            </div>
+
+            <div>
+              <FieldLabel>Categoría</FieldLabel>
+              <CategoryPicker value={category} onChange={setCategory} />
+              {showErrors && !category && <FieldError>Elegí una categoría</FieldError>}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-5">
+            <div>
+              <FieldLabel>Medio de pago</FieldLabel>
+              <PaymentPicker value={paymentMethod} onChange={setPaymentMethod} />
+            </div>
+
+            <AnimatePresence initial={false}>
+              {paymentMethod === 'credit' && (
+                <motion.div
+                  key="installments"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                  className="-mx-1 -mb-1.5 overflow-hidden px-1 pb-1.5"
+                >
+                  <FieldLabel>¿Cuándo lo pagás?</FieldLabel>
+                  <SegmentedControl<string>
+                    stretch
+                    value={String(cardMonthOffset)}
+                    onChange={(value) => setCardMonthOffset(value === '2' ? 2 : 1)}
+                    options={([1, 2] as const).map((offset) => ({
+                      value: String(offset),
+                      label: formatMonth(addMonths(monthKeyOf(date), offset), { year: false }),
+                    }))}
+                  />
+                  <p className="mt-2 text-xs text-muted-foreground">El gasto cuenta en el mes en que lo pagás, no en el de la compra.</p>
+
+                  <FieldLabel className="mt-5">Cuotas</FieldLabel>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Stepper label="Cantidad de cuotas" value={installments} onChange={setInstallments} min={1} max={MAX_INSTALLMENTS} />
+                    {QUICK_INSTALLMENTS.map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => setInstallments(option)}
+                        className={cn(
+                          'h-9 rounded-full px-3.5 text-sm font-medium tabular-nums transition-colors',
+                          installments === option
+                            ? 'border-2 border-ink-stamp bg-penny font-semibold text-ink-stamp'
+                            : 'border-2 border-transparent text-muted-foreground hover:bg-accent',
+                        )}
+                      >
+                        {option === 1 ? '1 pago' : option}
+                      </button>
+                    ))}
+                  </div>
+                  {count > 1 && drafts.length > 0 && (
+                    <p className="mt-2.5 text-sm text-muted-foreground">
+                      <span className="font-medium text-foreground tabular-nums">
+                        {count} × {formatMoney(drafts[0].amount, currency, { cents: currency === 'USD' })}
+                      </span>{' '}
+                      · de {formatMonth(drafts[0].month).toLowerCase()} a {formatMonth(drafts[drafts.length - 1].month).toLowerCase()}
+                    </p>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <FieldLabel>¿Era necesario?</FieldLabel>
+                <NecessaryPicker value={necessary} onChange={setNecessary} />
+              </div>
+              <div>
+                <FieldLabel>{paymentMethod === 'credit' ? 'Fecha de compra' : 'Fecha'}</FieldLabel>
+                <DateField value={date} onChange={setDate} />
+              </div>
             </div>
           </div>
         </form>

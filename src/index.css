@@ -353,6 +353,11 @@
       background: transparent;
     }
 
+    /* Keeps the thumb off rounded corners. */
+    ::-webkit-scrollbar-track {
+      margin-block: 6px;
+    }
+
     ::-webkit-scrollbar-thumb {
       border-radius: 999px;
       background: transparent;

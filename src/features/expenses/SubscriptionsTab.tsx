@@ -109,6 +109,7 @@ function SubscriptionSheet({
         onOpenChange={onOpenChange}
         title={subscription ? 'Editar suscripción' : 'Nueva suscripción'}
         description="Se carga sola como gasto fijo en los meses en que se cobra."
+        className="lg:max-w-[60rem]"
         footer={
           <div className="flex w-full gap-2">
             {subscription && (
@@ -129,98 +130,103 @@ function SubscriptionSheet({
           </div>
         }
       >
-        <form id={formId} onSubmit={handleSubmit} className="flex flex-col gap-5">
-          <div>
-            <FieldLabel htmlFor={`${formId}-name`}>Nombre</FieldLabel>
-            <Input id={`${formId}-name`} value={name} onChange={(event) => setName(event.target.value)} placeholder="Netflix, Spotify, gimnasio…" />
-            {showErrors && !name.trim() && <FieldError>Poné un nombre</FieldError>}
-          </div>
-
-          <div>
-            <FieldLabel htmlFor={`${formId}-amount`}>{frequency === 1 ? 'Monto mensual' : 'Monto por cobro'}</FieldLabel>
-            <div className="flex gap-2">
-              <MoneyInput id={`${formId}-amount`} value={amount} onChange={setAmount} currency={currency} className="flex-1" />
-              <CurrencyToggle value={currency} onChange={setCurrency} size="md" />
-            </div>
-            {showErrors && amount <= 0 && <FieldError>Ingresá un monto</FieldError>}
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
+        {/* Two columns on wide screens so the whole form fits without scrolling. */}
+        <form id={formId} onSubmit={handleSubmit} className="flex flex-col gap-5 lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-10">
+          <div className="flex flex-col gap-5">
             <div>
-              <FieldLabel>Frecuencia</FieldLabel>
-              <Select value={String(frequency)} onValueChange={(value) => changeFrequency(Number(value) as SubscriptionFrequency)}>
-                <SelectTrigger className="h-11 w-full rounded-xl">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="rounded-2xl">
-                  {FREQUENCIES.map((item) => (
-                    <SelectItem key={item.value} value={String(item.value)}>
-                      {item.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FieldLabel htmlFor={`${formId}-name`}>Nombre</FieldLabel>
+              <Input id={`${formId}-name`} value={name} onChange={(event) => setName(event.target.value)} placeholder="Netflix, Spotify, gimnasio…" />
+              {showErrors && !name.trim() && <FieldError>Poné un nombre</FieldError>}
             </div>
+
             <div>
-              <FieldLabel>Día de cobro</FieldLabel>
-              <Select value={String(dayOfMonth)} onValueChange={(value) => setDayOfMonth(Number(value))}>
+              <FieldLabel htmlFor={`${formId}-amount`}>{frequency === 1 ? 'Monto mensual' : 'Monto por cobro'}</FieldLabel>
+              <div className="flex gap-2">
+                <MoneyInput id={`${formId}-amount`} value={amount} onChange={setAmount} currency={currency} className="flex-1" />
+                <CurrencyToggle value={currency} onChange={setCurrency} size="md" />
+              </div>
+              {showErrors && amount <= 0 && <FieldError>Ingresá un monto</FieldError>}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <FieldLabel>Frecuencia</FieldLabel>
+                <Select value={String(frequency)} onValueChange={(value) => changeFrequency(Number(value) as SubscriptionFrequency)}>
+                  <SelectTrigger className="h-11 w-full rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl">
+                    {FREQUENCIES.map((item) => (
+                      <SelectItem key={item.value} value={String(item.value)}>
+                        {item.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <FieldLabel>Día de cobro</FieldLabel>
+                <Select value={String(dayOfMonth)} onValueChange={(value) => setDayOfMonth(Number(value))}>
+                  <SelectTrigger className="h-11 w-full rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-72 rounded-2xl">
+                    {DAYS.map((day) => (
+                      <SelectItem key={day} value={String(day)}>
+                        Día {day}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <FieldLabel>{subscription ? 'Próximo cobro' : 'Primer cobro'}</FieldLabel>
+              <Select value={anchor} onValueChange={setAnchor}>
                 <SelectTrigger className="h-11 w-full rounded-xl">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="max-h-72 rounded-2xl">
-                  {DAYS.map((day) => (
-                    <SelectItem key={day} value={String(day)}>
-                      Día {day}
+                  {anchorOptions(currentMonth, frequency).map((month) => (
+                    <SelectItem key={month} value={month}>
+                      {formatMonth(month)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {!subscription && chargesNow && (
+                <p className="mt-2 text-xs text-muted-foreground">El día ya pasó: el cobro de este mes se registra al guardar.</p>
+              )}
             </div>
-          </div>
 
-          <div>
-            <FieldLabel>{subscription ? 'Próximo cobro' : 'Primer cobro'}</FieldLabel>
-            <Select value={anchor} onValueChange={setAnchor}>
-              <SelectTrigger className="h-11 w-full rounded-xl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="max-h-72 rounded-2xl">
-                {anchorOptions(currentMonth, frequency).map((month) => (
-                  <SelectItem key={month} value={month}>
-                    {formatMonth(month)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {!subscription && chargesNow && (
-              <p className="mt-2 text-xs text-muted-foreground">El día ya pasó: el cobro de este mes se registra al guardar.</p>
+            {subscription && (
+              <label className="flex items-center justify-between gap-3 text-sm">
+                <span>
+                  <span className="block font-medium">Activa</span>
+                  <span className="text-muted-foreground">Pausala para dejar de generar el gasto.</span>
+                </span>
+                <Switch checked={active} onCheckedChange={setActive} />
+              </label>
             )}
           </div>
 
-          <div>
-            <FieldLabel>Categoría</FieldLabel>
-            <CategoryPicker value={category} onChange={setCategory} />
-          </div>
+          <div className="flex flex-col gap-5">
+            <div>
+              <FieldLabel>Categoría</FieldLabel>
+              <CategoryPicker value={category} onChange={setCategory} />
+            </div>
 
-          <div>
-            <FieldLabel>Medio de pago</FieldLabel>
-            <PaymentPicker value={paymentMethod} onChange={setPaymentMethod} />
-          </div>
+            <div>
+              <FieldLabel>Medio de pago</FieldLabel>
+              <PaymentPicker value={paymentMethod} onChange={setPaymentMethod} />
+            </div>
 
-          <div>
-            <FieldLabel>¿Es necesario?</FieldLabel>
-            <NecessaryPicker value={necessary} onChange={setNecessary} />
+            <div>
+              <FieldLabel>¿Es necesario?</FieldLabel>
+              <NecessaryPicker value={necessary} onChange={setNecessary} />
+            </div>
           </div>
-
-          {subscription && (
-            <label className="flex items-center justify-between gap-3 text-sm">
-              <span>
-                <span className="block font-medium">Activa</span>
-                <span className="text-muted-foreground">Pausala para dejar de generar el gasto.</span>
-              </span>
-              <Switch checked={active} onCheckedChange={setActive} />
-            </label>
-          )}
         </form>
       </ResponsiveModal>
 

@@ -18,10 +18,13 @@ if (window.matchMedia('(pointer: fine)').matches) {
   document.addEventListener(
     'scroll',
     (event) => {
-      const target = event.target instanceof Element ? event.target : document.documentElement
-      target.setAttribute('data-scrolling', '')
-      window.clearTimeout(timers.get(target))
-      timers.set(target, window.setTimeout(() => target.removeAttribute('data-scrolling'), 800))
+      // The page scrollbar takes its style from <body> in Chrome/Safari and from <html> in Firefox.
+      const targets = event.target instanceof Element ? [event.target] : [document.documentElement, document.body]
+      for (const target of targets) {
+        target.setAttribute('data-scrolling', '')
+        window.clearTimeout(timers.get(target))
+        timers.set(target, window.setTimeout(() => target.removeAttribute('data-scrolling'), 800))
+      }
     },
     { capture: true, passive: true },
   )

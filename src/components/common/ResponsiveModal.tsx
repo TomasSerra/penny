@@ -21,12 +21,13 @@ export function ResponsiveModal({ open, onOpenChange, title, description, childr
   if (desktop) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className={cn('sm:max-w-lg', className)}>
+        <DialogContent className={cn('flex flex-col overflow-hidden sm:max-w-lg', className)}>
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
             <DialogDescription className={cn(!description && 'sr-only')}>{description ?? title}</DialogDescription>
           </DialogHeader>
-          {children}
+          {/* Only the body scrolls, so the scrollbar sits inside the padding instead of on the card's rounded edge. */}
+          <div className="-my-1 -mr-4 -ml-1 min-h-0 flex-1 overflow-y-auto py-1 pr-4 pl-1">{children}</div>
           {footer && <DialogFooter>{footer}</DialogFooter>}
         </DialogContent>
       </Dialog>
