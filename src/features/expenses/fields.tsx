@@ -91,11 +91,19 @@ export function CurrencyToggle({ value, onChange, size = 'sm' }: { value: Curren
   )
 }
 
-export function CategoryPicker({ value, onChange }: { value: CategoryId | null; onChange: (value: CategoryId) => void }) {
+export function CategoryPicker({
+  value,
+  onChange,
+  className,
+}: {
+  value: CategoryId | null
+  onChange: (value: CategoryId) => void
+  className?: string
+}) {
   const layoutId = useId()
   // Four columns on a phone: with five, labels like "Supermercado" break mid-word.
   return (
-    <div className="grid grid-cols-4 gap-1 sm:grid-cols-5" role="radiogroup" aria-label="Categoría">
+    <div className={cn('grid grid-cols-4 gap-1 sm:grid-cols-5', className)} role="radiogroup" aria-label="Categoría">
       {CATEGORIES.map((category) => {
         const selected = value === category.id
         return (
@@ -107,7 +115,8 @@ export function CategoryPicker({ value, onChange }: { value: CategoryId | null; 
             whileTap={{ scale: 0.93 }}
             onClick={() => onChange(category.id)}
             className={cn(
-              'relative flex h-[4.9rem] flex-col items-center justify-center gap-1.5 rounded-2xl px-0.5 text-center transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+              // Top-aligned so icons line up in a row even when a label wraps to two lines.
+              'relative flex h-[4.9rem] flex-col items-center justify-start gap-1 rounded-2xl px-0.5 pt-1.5 text-center transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
               selected ? 'font-semibold text-ink-stamp' : 'text-muted-foreground hover:bg-foreground/[0.04]',
             )}
           >
@@ -122,7 +131,7 @@ export function CategoryPicker({ value, onChange }: { value: CategoryId | null; 
               category={category.id}
               className={cn('relative transition-transform duration-300', selected && 'scale-110')}
             />
-            <span className="relative line-clamp-2 max-w-full text-[10px] leading-[1.15] font-medium tracking-tight break-words hyphens-auto" lang="es">
+            <span className="relative -mx-1 line-clamp-2 text-[10px] leading-[1.15] font-medium tracking-tight break-words hyphens-auto" lang="es">
               {category.label}
             </span>
           </motion.button>
@@ -167,10 +176,10 @@ export function PaymentPicker({ value, onChange }: { value: PaymentMethodId; onC
   )
 }
 
-export function NecessaryPicker({ value, onChange }: { value: boolean; onChange: (value: boolean) => void }) {
+export function NecessaryPicker({ value, onChange, stretch = true }: { value: boolean; onChange: (value: boolean) => void; stretch?: boolean }) {
   return (
     <SegmentedControl<'yes' | 'no'>
-      stretch
+      stretch={stretch}
       value={value ? 'yes' : 'no'}
       onChange={(next) => onChange(next === 'yes')}
       options={[

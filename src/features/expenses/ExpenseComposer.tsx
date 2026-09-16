@@ -16,7 +16,7 @@ import { ResponsiveModal } from '@/components/common/ResponsiveModal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { createExpenses, deleteExpense, replaceExpense, updateExpense } from '@/data/expenses'
-import { useIsDesktop } from '@/hooks/useMediaQuery'
+import { useIsDesktop, useMediaQuery } from '@/hooks/useMediaQuery'
 import { amountToInput, formatAmountInput, parseAmountInput } from '@/lib/amountInput'
 import { currencySymbol, formatMoney, formatMonth } from '@/lib/format'
 import { cn } from '@/lib/utils'
@@ -80,6 +80,8 @@ interface ExpenseSheetProps {
 function ExpenseSheet({ open, onOpenChange, expense }: ExpenseSheetProps) {
   const { uid, rate } = useSession()
   const desktop = useIsDesktop()
+  // Matches the form's two-column breakpoint (lg).
+  const wide = useMediaQuery('(min-width: 1024px)')
   const formId = useId()
   const plan = expense?.installment
 
@@ -99,7 +101,8 @@ function ExpenseSheet({ open, onOpenChange, expense }: ExpenseSheetProps) {
   const amount = parseAmountInput(amountText)
   // Edits keep the quote the expense was recorded with, so history doesn't shift.
   const effectiveRate = expense?.rate ?? rate
-  const count = paymentMethod === 'credit' ? installments : 1
+  const credit = paymentMethod === 'credit'
+  const count = credit ? installments : 1
 
   const drafts = useMemo(() => {
     if (!category || amount <= 0 || !effectiveRate) return []
@@ -154,6 +157,30 @@ function ExpenseSheet({ open, onOpenChange, expense }: ExpenseSheetProps) {
     onOpenChange(false)
   }
 
+  // Which statement the purchase lands on. On wide screens it sits under the purchase date it depends on.
+  const necessaryField = (
+    <div>
+      <FieldLabel>¿Era necesario?</FieldLabel>
+      <NecessaryPicker value={necessary} onChange={setNecessary} stretch={!wide} />
+    </div>
+  )
+
+  const payMonthField = (
+    <>
+      <FieldLabel>¿Cuándo lo pagás?</FieldLabel>
+      <SegmentedControl<string>
+        stretch
+        value={String(cardMonthOffset)}
+        onChange={(value) => setCardMonthOffset(value === '2' ? 2 : 1)}
+        options={([1, 2] as const).map((offset) => ({
+          value: String(offset),
+          label: formatMonth(addMonths(monthKeyOf(date), offset), { year: false }),
+        }))}
+      />
+      <p className="mt-2 text-xs text-muted-foreground">El gasto cuenta en el mes en que lo pagás, no en el de la compra.</p>
+    </>
+  )
+
   const conversion =
     amount > 0 && effectiveRate
       ? currency === 'ARS'
@@ -167,82 +194,89 @@ function ExpenseSheet({ open, onOpenChange, expense }: ExpenseSheetProps) {
         open={open}
         onOpenChange={onOpenChange}
         title={expense ? 'Editar gasto' : 'Nuevo gasto'}
-        className="lg:max-w-[60rem]"
+        className="lg:max-w-[62rem]"
         footer={
-          <div className="flex w-full gap-2">
+          <div className="flex w-full gap-2 lg:justify-end">
             {expense && (
               <Button
                 type="button"
                 variant="ghost"
                 size="icon-lg"
-                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive lg:mr-auto"
                 onClick={() => setConfirmDelete(true)}
                 aria-label="Borrar gasto"
               >
                 <HugeiconsIcon icon={Delete02Icon} />
               </Button>
             )}
-            <Button type="submit" form={formId} size="lg" className="flex-1">
+            <Button type="submit" form={formId} size="lg" className="flex-1 lg:w-56 lg:flex-none">
               {expense ? 'Guardar cambios' : 'Cargar gasto'}
             </Button>
           </div>
         }
       >
-        {/* Two columns on wide screens so the whole form fits without scrolling. */}
-        <form id={formId} onSubmit={handleSubmit} className="flex flex-col gap-5 lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-10">
-          <div className="flex flex-col gap-5">
-            <div className="flex flex-col items-center pt-1">
-              <CurrencyToggle value={currency} onChange={setCurrency} />
-              <label className="mt-3 flex w-full items-baseline justify-center gap-1.5">
-                <span className="text-2xl font-medium text-muted-foreground">{currencySymbol(currency)}</span>
-                <input
-                  autoFocus={desktop && !expense}
-                  inputMode="decimal"
-                  autoComplete="off"
-                  placeholder="0"
-                  aria-label="Monto"
-                  value={amountText}
-                  onChange={(event) => setAmountText(formatAmountInput(event.target.value, amountText))}
-                  style={{ width: `${Math.max(1, amountText.length) * 0.6 + 0.3}em` }}
-                  className="max-w-full min-w-[1ch] bg-transparent text-center text-[3.25rem] leading-none font-semibold tracking-tight tabular-nums caret-penny outline-none placeholder:text-muted-foreground/35"
-                />
-              </label>
-              <p className="mt-2 h-4 text-xs text-muted-foreground tabular-nums">
-                {conversion && (
-                  <>
-                    {conversion} · {effectiveRate && rateLabel(effectiveRate)}
-                  </>
-                )}
-              </p>
-              {showErrors && amount <= 0 && <FieldError>Ingresá un monto</FieldError>}
-            </div>
+        {/*
+          Phone: one column in DOM order. Wide screens: a tinted summary panel on the left (amount,
+          description, and the defaulted fields at its foot) beside the pickers, so nothing needs scrolling.
+        */}
+        <form
+          id={formId}
+          onSubmit={handleSubmit}
+          className="flex flex-col gap-5 lg:grid lg:grid-cols-[19rem_minmax(0,1fr)] lg:grid-rows-[1fr_auto_auto] lg:gap-x-8 lg:gap-y-0"
+        >
+          <div aria-hidden className="hidden rounded-3xl bg-muted lg:col-start-1 lg:row-span-3 lg:row-start-1 lg:block" />
 
-            <div>
-              <FieldLabel htmlFor={`${formId}-description`}>Descripción</FieldLabel>
-              <Input
-                id={`${formId}-description`}
-                value={description}
-                maxLength={200}
-                onChange={(event) => setDescription(event.target.value)}
-                placeholder={category ? CATEGORY_BY_ID[category].label : '¿En qué gastaste?'}
+          <div className="flex flex-col items-center pt-1 lg:col-start-1 lg:row-start-1 lg:self-center lg:px-5 lg:py-6">
+            <CurrencyToggle value={currency} onChange={setCurrency} />
+            <label className="mt-3 flex w-full items-baseline justify-center gap-1.5">
+              <span className="text-2xl font-medium text-muted-foreground">{currencySymbol(currency)}</span>
+              <input
+                autoFocus={desktop && !expense}
+                inputMode="decimal"
+                autoComplete="off"
+                placeholder="0"
+                aria-label="Monto"
+                value={amountText}
+                onChange={(event) => setAmountText(formatAmountInput(event.target.value, amountText))}
+                style={{ width: `${Math.max(1, amountText.length) * 0.6 + 0.3}em` }}
+                className="max-w-full min-w-[1ch] bg-transparent text-center text-[3.25rem] leading-none font-semibold tracking-tight tabular-nums caret-penny outline-none placeholder:text-muted-foreground/35"
               />
-            </div>
-
-            <div>
-              <FieldLabel>Categoría</FieldLabel>
-              <CategoryPicker value={category} onChange={setCategory} />
-              {showErrors && !category && <FieldError>Elegí una categoría</FieldError>}
-            </div>
+            </label>
+            <p className="mt-2 h-4 text-xs text-muted-foreground tabular-nums">
+              {conversion && (
+                <>
+                  {conversion} · {effectiveRate && rateLabel(effectiveRate)}
+                </>
+              )}
+            </p>
+            {showErrors && amount <= 0 && <FieldError>Ingresá un monto</FieldError>}
           </div>
 
-          <div className="flex flex-col gap-5">
+          <div className="lg:col-start-1 lg:row-start-2 lg:px-5">
+            <FieldLabel htmlFor={`${formId}-description`}>Descripción</FieldLabel>
+            <Input
+              id={`${formId}-description`}
+              value={description}
+              maxLength={200}
+              onChange={(event) => setDescription(event.target.value)}
+              placeholder={category ? CATEGORY_BY_ID[category].label : '¿En qué gastaste?'}
+            />
+          </div>
+
+          <div className="flex flex-col gap-5 lg:col-start-2 lg:row-span-3 lg:row-start-1">
+            <div>
+              <FieldLabel>Categoría</FieldLabel>
+              <CategoryPicker value={category} onChange={setCategory} className="lg:grid-cols-8" />
+              {showErrors && !category && <FieldError>Elegí una categoría</FieldError>}
+            </div>
+
             <div>
               <FieldLabel>Medio de pago</FieldLabel>
               <PaymentPicker value={paymentMethod} onChange={setPaymentMethod} />
             </div>
 
             <AnimatePresence initial={false}>
-              {paymentMethod === 'credit' && (
+              {credit && (
                 <motion.div
                   key="installments"
                   initial={{ height: 0, opacity: 0 }}
@@ -251,19 +285,8 @@ function ExpenseSheet({ open, onOpenChange, expense }: ExpenseSheetProps) {
                   transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                   className="-mx-1 -mb-1.5 overflow-hidden px-1 pb-1.5"
                 >
-                  <FieldLabel>¿Cuándo lo pagás?</FieldLabel>
-                  <SegmentedControl<string>
-                    stretch
-                    value={String(cardMonthOffset)}
-                    onChange={(value) => setCardMonthOffset(value === '2' ? 2 : 1)}
-                    options={([1, 2] as const).map((offset) => ({
-                      value: String(offset),
-                      label: formatMonth(addMonths(monthKeyOf(date), offset), { year: false }),
-                    }))}
-                  />
-                  <p className="mt-2 text-xs text-muted-foreground">El gasto cuenta en el mes en que lo pagás, no en el de la compra.</p>
-
-                  <FieldLabel className="mt-5">Cuotas</FieldLabel>
+                  {!wide && <div className="mb-5">{payMonthField}</div>}
+                  <FieldLabel>Cuotas</FieldLabel>
                   <div className="flex flex-wrap items-center gap-2">
                     <Stepper label="Cantidad de cuotas" value={installments} onChange={setInstallments} min={1} max={MAX_INSTALLMENTS} />
                     {QUICK_INSTALLMENTS.map((option) => (
@@ -294,16 +317,33 @@ function ExpenseSheet({ open, onOpenChange, expense }: ExpenseSheetProps) {
               )}
             </AnimatePresence>
 
-            <div className="grid gap-3 sm:grid-cols-2">
+            {wide && necessaryField}
+          </div>
+
+          <div className="lg:col-start-1 lg:row-start-3 lg:p-5">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+              {!wide && necessaryField}
               <div>
-                <FieldLabel>¿Era necesario?</FieldLabel>
-                <NecessaryPicker value={necessary} onChange={setNecessary} />
-              </div>
-              <div>
-                <FieldLabel>{paymentMethod === 'credit' ? 'Fecha de compra' : 'Fecha'}</FieldLabel>
+                <FieldLabel>{credit ? 'Fecha de compra' : 'Fecha'}</FieldLabel>
                 <DateField value={date} onChange={setDate} />
               </div>
             </div>
+            {wide && (
+              <AnimatePresence initial={false}>
+                {credit && (
+                  <motion.div
+                    key="pay-month"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                    className="-mx-1 -mb-1.5 overflow-hidden px-1 pb-1.5"
+                  >
+                    <div className="pt-4">{payMonthField}</div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            )}
           </div>
         </form>
       </ResponsiveModal>
