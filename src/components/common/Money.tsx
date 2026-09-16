@@ -28,7 +28,15 @@ export function Money({ value, currency = 'ARS', cents, animated, fromZero, tabu
       {negative && <span>−</span>}
       <span className={cn('mr-[0.2em] text-[0.62em] font-medium opacity-55', symbolClassName)}>{currencySymbol(currency)}</span>
       {animated ? (
-        <AnimatedNumber value={Math.abs(value)} fromZero={fromZero} format={(latest) => numberPart(latest, currency, cents)} />
+        // Keyed by currency: tweening straight from an ARS amount to a USD one would print the big
+        // ARS figures in the USD format (with cents), wider than either end, and push the card out.
+        // Restarting in the new currency only ever counts up to the final width.
+        <AnimatedNumber
+          key={currency}
+          value={Math.abs(value)}
+          fromZero={fromZero}
+          format={(latest) => numberPart(latest, currency, cents)}
+        />
       ) : (
         <span>{numberPart(value, currency, cents)}</span>
       )}
