@@ -14,7 +14,7 @@ export function SetupScreen() {
   return (
     <div className="grid min-h-(--app-height) place-items-center p-4">
       <AmbientBackground />
-      <div className="paper w-full max-w-lg rounded-4xl p-8">
+      <div className="paper-flat w-full max-w-lg rounded-4xl p-8">
         <Penny pose="sad" priority className="h-24" />
         <h1 className="mt-5 font-display text-3xl leading-tight">Falta configurar Firebase</h1>
         <p className="mt-3 text-sm text-muted-foreground">

@@ -33,5 +33,5 @@ export function EmptyState({ pose, title, description, action, compact, classNam
 
 /** Card for a page-level empty state. On mobile it takes the rest of the screen, so the page never scrolls. */
 export function EmptyStateCard({ children }: { children: ReactNode }) {
-  return <div className="paper flex flex-col justify-center rounded-4xl max-md:flex-1">{children}</div>
+  return <div className="paper-flat flex flex-col justify-center rounded-4xl max-md:flex-1">{children}</div>
 }

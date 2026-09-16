@@ -275,7 +275,7 @@ export function SubscriptionsTab() {
       ) : (
         <>
           <div className="flex items-end justify-between gap-3">
-            <div className="paper rounded-3xl p-4 md:p-5">
+            <div className="paper-flat rounded-3xl p-4 md:p-5">
               <p className="text-xs text-muted-foreground">Por mes en suscripciones, en promedio</p>
               <Money value={monthlyTotal} animated className="mt-1 text-2xl font-semibold md:text-3xl" />
             </div>
@@ -285,7 +285,7 @@ export function SubscriptionsTab() {
             </Button>
           </div>
 
-          <div className="paper divide-y divide-border overflow-hidden rounded-3xl">
+          <div className="paper-flat divide-y divide-border overflow-hidden rounded-3xl">
             {subscriptions.map((subscription, index) => {
               const payment = PAYMENT_METHOD_BY_ID[subscription.paymentMethod]
               const frequency = frequencyOf(subscription)

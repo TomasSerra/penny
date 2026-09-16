@@ -59,7 +59,7 @@ function ItemsSection({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
-      className="paper @container rounded-4xl p-5 md:p-6"
+      className="paper-flat @container rounded-4xl p-5 md:p-6"
     >
       <header className="mb-3 flex items-start justify-between gap-3">
         <div>
@@ -232,7 +232,7 @@ function BudgetEditor({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-          className="paper rounded-4xl p-5 md:p-6"
+          className="paper-flat rounded-4xl p-5 md:p-6"
         >
           <header className="mb-5">
             <h2 className="font-semibold">Ahorro</h2>
@@ -255,7 +255,7 @@ function BudgetEditor({
         </motion.section>
       </div>
 
-      <aside className="paper flex flex-col gap-5 rounded-4xl p-5 md:p-6 lg:sticky lg:top-10">
+      <aside className="paper-flat flex flex-col gap-5 rounded-4xl p-5 md:p-6 lg:sticky lg:top-10">
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>Ingreso neto</span>
           <AnimatePresence mode="wait">

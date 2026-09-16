@@ -129,7 +129,7 @@ export function OnboardingFlow({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 z-50 overflow-y-auto bg-background" role="dialog" aria-modal="true" aria-label="Configurar Penny">
       <AmbientBackground />
       <div className="mx-auto flex min-h-(--app-height) w-full max-w-lg flex-col justify-center px-4 py-8 pb-[calc(2rem+env(safe-area-inset-bottom))]">
-        <div className="paper relative mt-16 rounded-4xl p-6 md:p-8">
+        <div className="paper-flat relative mt-16 rounded-4xl p-6 md:p-8">
           <Penny
             pose={POSES[step]}
             priority

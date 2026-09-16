@@ -132,7 +132,7 @@ export default function DashboardPage() {
         </Reveal>
 
         <Reveal index={1} className="md:col-span-2 xl:col-span-1">
-          <section className="paper flex h-full flex-col rounded-4xl p-6">
+          <section className="paper-flat flex h-full flex-col rounded-4xl p-6">
             <p className="text-sm text-muted-foreground">Ingreso neto</p>
             {summary ? (
               <>
@@ -186,7 +186,7 @@ export default function DashboardPage() {
 
         {summary && (
           <Reveal index={2} className="md:col-span-2 xl:col-span-3">
-            <section className="paper rounded-4xl p-5 md:p-6">
+            <section className="paper-flat rounded-4xl p-5 md:p-6">
               <header className="mb-4">
                 <h2 className="font-semibold">Distribución del mes</h2>
                 <p className="text-sm text-muted-foreground">Cómo se reparte tu ingreso neto</p>

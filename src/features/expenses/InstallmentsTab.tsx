@@ -44,7 +44,7 @@ function PlanCard({ plan, index }: { plan: Plan; index: number }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, delay: index * 0.04, ease: [0.16, 1, 0.3, 1] }}
       onClick={() => composer.open(first)}
-      className={cn('paper flex w-full flex-col gap-4 rounded-3xl p-5 text-left transition-transform hover:-translate-y-0.5', !plan.active && 'opacity-60')}
+      className={cn('paper-flat flex w-full flex-col gap-4 rounded-3xl p-5 text-left transition-colors hover:bg-[color-mix(in_oklch,var(--paper-card),var(--ink)_6%)]', !plan.active && 'opacity-60')}
     >
       <div className="flex items-start gap-3.5">
         <CategoryTile category={first.category} />
@@ -127,11 +127,11 @@ export function InstallmentsTab() {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 gap-3">
-        <div className="paper rounded-3xl p-4 md:p-5">
+        <div className="paper-flat rounded-3xl p-4 md:p-5">
           <p className="text-xs text-muted-foreground">Cuotas este mes</p>
           <Money value={thisMonth} animated className="mt-1 text-2xl font-semibold md:text-3xl" />
         </div>
-        <div className="paper rounded-3xl p-4 md:p-5">
+        <div className="paper-flat rounded-3xl p-4 md:p-5">
           <p className="text-xs text-muted-foreground">Falta pagar</p>
           <Money value={remaining} animated className="mt-1 text-2xl font-semibold md:text-3xl" />
         </div>

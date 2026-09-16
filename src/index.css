@@ -201,7 +201,10 @@
   --noise-opacity: 0.07;
 }
 
-/* Every surface is a piece of paper: flat fill, inked outline, hard offset shadow. */
+/*
+ * Interactive paper: flat fill, inked outline, hard offset shadow. Reserved for controls
+ * (buttons, selectors, tabs) and app chrome (sidebar), so they read as pressable.
+ */
 @utility paper {
   background-color: var(--paper-card);
   border: var(--ink-width) solid var(--ink);
@@ -214,7 +217,7 @@
   box-shadow: var(--ink-shadow-lg);
 }
 
-/* Flat paper — no shadow, for surfaces nested inside another sheet. */
+/* Flat paper — no shadow. Content containers (cards, widgets, panels) use this. */
 @utility paper-flat {
   background-color: var(--paper-card);
   border: var(--ink-width) solid var(--ink);

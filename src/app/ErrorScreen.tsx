@@ -11,7 +11,7 @@ export function ErrorScreen() {
   return (
     <div className="grid min-h-(--app-height) place-items-center p-4">
       <AmbientBackground />
-      <div className="paper flex w-full max-w-md flex-col items-center rounded-4xl p-8 text-center">
+      <div className="paper-flat flex w-full max-w-md flex-col items-center rounded-4xl p-8 text-center">
         <Penny pose="sad" priority className="h-36 -rotate-2" />
         <h1 className="mt-4 font-display text-3xl leading-tight">
           {notFound ? 'Esta página no existe' : 'Se nos cayó una moneda'}

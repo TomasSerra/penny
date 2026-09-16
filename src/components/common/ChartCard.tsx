@@ -15,7 +15,7 @@ interface ChartCardProps {
 export function ChartCard({ title, description, legend, table, children, className }: ChartCardProps) {
   const [view, setView] = useState<'chart' | 'table'>('chart')
   return (
-    <section className={cn('paper flex min-w-0 flex-col rounded-4xl p-5 md:p-6', className)}>
+    <section className={cn('paper-flat flex min-w-0 flex-col rounded-4xl p-5 md:p-6', className)}>
       <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="font-semibold">{title}</h2>

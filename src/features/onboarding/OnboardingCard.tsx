@@ -10,7 +10,7 @@ export function OnboardingCard({ className }: { className?: string }) {
   const { open } = useOnboarding()
 
   return (
-    <section className={cn('paper relative flex flex-col items-start justify-center rounded-4xl p-6 md:p-8', className)}>
+    <section className={cn('paper-flat relative flex flex-col items-start justify-center rounded-4xl p-6 md:p-8', className)}>
       <Penny
         pose="surprise"
         className="pointer-events-none absolute -top-10 right-1 h-24 -rotate-3 sm:-top-8 sm:right-4 sm:h-28 md:-top-6 md:right-8 md:h-32"

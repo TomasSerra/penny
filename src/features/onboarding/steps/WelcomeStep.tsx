@@ -18,7 +18,7 @@ export function WelcomeStep() {
       <ul className="mt-6 flex flex-col gap-2.5">
         {AGENDA.map((item, index) => (
           <li key={item.title} className="flex items-center gap-3.5 rounded-3xl bg-foreground/[0.03] p-3.5 dark:bg-white/[0.03]">
-            <span className="coin grid size-10 shrink-0 place-items-center rounded-2xl font-display text-base">{index + 1}</span>
+            <span className="coin grid size-10 shadow-none shrink-0 place-items-center rounded-2xl font-display text-base">{index + 1}</span>
             <span className="min-w-0">
               <span className="flex items-center gap-2 text-sm font-semibold">
                 <HugeiconsIcon icon={item.icon} className="size-4 text-penny-ink" strokeWidth={2} />

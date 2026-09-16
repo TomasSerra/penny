@@ -54,7 +54,7 @@ export function PaceHero({ pace, currency, convert }: PaceHeroProps) {
   const percentUsed = Math.round(pace.progress * 100)
 
   return (
-    <section className="paper relative rounded-4xl p-6 md:p-8">
+    <section className="paper-flat relative rounded-4xl p-6 md:p-8">
       <Penny
         pose={statusPose(pace)}
         className="pointer-events-none absolute -top-10 right-1 h-24 rotate-3 sm:-top-8 sm:right-4 sm:h-28 md:-top-6 md:right-8 md:h-36"
@@ -127,7 +127,7 @@ export function PaceHero({ pace, currency, convert }: PaceHeroProps) {
 
 export function PaceHeroEmpty({ month }: { month: MonthKey }) {
   return (
-    <section className="paper relative flex flex-col items-start justify-center rounded-4xl p-6 md:p-8">
+    <section className="paper-flat relative flex flex-col items-start justify-center rounded-4xl p-6 md:p-8">
       <Penny pose="rock" className="pointer-events-none absolute -top-10 right-1 h-24 -rotate-3 sm:-top-8 sm:right-4 sm:h-28 md:-top-6 md:right-8 md:h-32" />
       <h2 className="relative font-display text-3xl leading-tight">Falta tu presupuesto</h2>
       <p className="relative mt-2 max-w-md text-sm text-muted-foreground">

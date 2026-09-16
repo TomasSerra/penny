@@ -78,7 +78,7 @@ export function LoginPage() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.08, ease: EASE }}
-          className="paper rounded-4xl p-5 sm:p-6"
+          className="paper-flat rounded-4xl p-5 sm:p-6"
         >
           <SegmentedControl<Mode>
             stretch

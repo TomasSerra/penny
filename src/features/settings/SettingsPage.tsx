@@ -57,7 +57,7 @@ function Section({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
-      className="paper relative scroll-mt-6 rounded-4xl p-5 md:p-6"
+      className="paper-flat relative scroll-mt-6 rounded-4xl p-5 md:p-6"
     >
       <div className="mb-5 flex flex-wrap items-start gap-3.5">
         <span className="grid size-10 shrink-0 place-items-center rounded-2xl border-2 border-ink-stamp bg-penny text-ink-stamp">
