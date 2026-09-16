@@ -16,7 +16,6 @@ import { updateSettings } from '@/data/profile'
 import { useExpenseComposer } from '@/features/expenses/ExpenseComposer'
 import { cn } from '@/lib/utils'
 import { newIncome, type OnboardingDraft } from './draft'
-import { CardStep } from './steps/CardStep'
 import { DoneStep } from './steps/DoneStep'
 import { IncomeStep } from './steps/IncomeStep'
 import { RateStep } from './steps/RateStep'
@@ -25,10 +24,11 @@ import { WelcomeStep } from './steps/WelcomeStep'
 
 const EASE = [0.16, 1, 0.3, 1] as const
 
-/** Welcome and the closing screen frame the flow; only the four middle ones count as steps. */
-const POSES: PennyPose[] = ['base', 'rock', 'sunglasses', 'surprise', 'thumbUp', 'celebration']
+/** Welcome and the closing screen frame the flow; only the three middle ones count as steps. */
+const POSES: PennyPose[] = ['base', 'rock', 'sunglasses', 'surprise', 'celebration']
 const FIRST_STEP = 1
-const LAST_STEP = 4
+const LAST_STEP = 3
+const DONE_STEP = LAST_STEP + 1
 const TOTAL_STEPS = LAST_STEP - FIRST_STEP + 1
 
 function Progress({ step }: { step: number }) {
@@ -63,7 +63,6 @@ export function OnboardingFlow({ onClose }: { onClose: () => void }) {
     incomes: [newIncome('Sueldo')],
     savings: { shortTermPct: 10, longTermPct: 10 },
     rate: settings.rate,
-    cardClosingDay: settings.cardClosingDay,
   }))
 
   const rateValue = rate?.value ?? 0
@@ -88,7 +87,6 @@ export function OnboardingFlow({ onClose }: { onClose: () => void }) {
   function next() {
     if (step === 2) commitBudget()
     if (step === 3) commitSettings({ rate: draft.rate })
-    if (step === 4) commitSettings({ cardClosingDay: draft.cardClosingDay })
     setStep(step + 1)
   }
 
@@ -109,7 +107,7 @@ export function OnboardingFlow({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && step < 5) {
+      if (event.key === 'Escape' && step < DONE_STEP) {
         event.preventDefault()
         skip()
         return
@@ -118,7 +116,7 @@ export function OnboardingFlow({ onClose }: { onClose: () => void }) {
       // Anything focusable already does its own thing with Enter.
       if (event.target instanceof HTMLElement && event.target.closest('button, [role="slider"], [role="combobox"]')) return
       event.preventDefault()
-      if (step === 5) finish()
+      if (step === DONE_STEP) finish()
       else if (!blocked) next()
     }
     window.addEventListener('keydown', onKeyDown)
@@ -130,7 +128,7 @@ export function OnboardingFlow({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-background" role="dialog" aria-modal="true" aria-label="Configurar Penny">
       <AmbientBackground />
-      <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center px-4 py-8 pb-[calc(2rem+env(safe-area-inset-bottom))]">
+      <div className="mx-auto flex min-h-(--app-height) w-full max-w-lg flex-col justify-center px-4 py-8 pb-[calc(2rem+env(safe-area-inset-bottom))]">
         <div className="paper relative mt-16 rounded-4xl p-6 md:p-8">
           <Penny
             pose={POSES[step]}
@@ -165,10 +163,7 @@ export function OnboardingFlow({ onClose }: { onClose: () => void }) {
                 <SavingsStep savings={draft.savings} onChange={(savings) => setDraft({ ...draft, savings })} summary={summary} />
               )}
               {step === 3 && <RateStep value={draft.rate} onChange={(next) => setDraft({ ...draft, rate: next })} />}
-              {step === 4 && (
-                <CardStep value={draft.cardClosingDay} onChange={(cardClosingDay) => setDraft({ ...draft, cardClosingDay })} />
-              )}
-              {step === 5 && (
+              {step === DONE_STEP && (
                 <DoneStep
                   summary={summary}
                   onAddExpense={() => {
@@ -182,7 +177,7 @@ export function OnboardingFlow({ onClose }: { onClose: () => void }) {
           </AnimatePresence>
 
           <div className="relative mt-7 flex items-center justify-between gap-3">
-            {step < 5 ? (
+            {step < DONE_STEP ? (
               <>
                 <Button variant="ghost" onClick={skip} className="text-muted-foreground">
                   Lo hago después

@@ -68,7 +68,7 @@ En **Ajustes → API para tu Atajo** generás tu API key y copiás la URL. En el
 
 - Método `POST`, header `Content-Type: application/json`.
 - URL `https://<tu-dominio>/api/expenses?key=<tu-api-key>`.
-- Body JSON con `date`, `amount`, `description`, `category`, `paymentMethod` y `necessary` (el mismo formato que usabas con Sheets). Opcionales: `currency` (`ARS`/`USD`) e `installments`.
+- Body JSON con `date`, `amount`, `description`, `category`, `paymentMethod` y `necessary` (el mismo formato que usabas con Sheets). Opcionales: `currency` (`ARS`/`USD`), `installments` y, con crédito, `cardMonthOffset` (`1` = se paga el mes que viene, por defecto; `2` = el siguiente).
 
 La API acepta categorías con o sin emoji, `Si`/`No` o `true`/`false`, montos como `"$13.600"` y fechas `dd/mm/aaaa`, ISO o el formato largo de Atajos. `GET /api/meta` devuelve las listas para armar menús.
 
@@ -80,4 +80,4 @@ Igual que la planilla original:
 - **Ahorro corto y largo plazo** = % del neto.
 - **Gastos variables** = neto − gastos fijos − ahorros.
 
-El mes actual usa la cotización en vivo de [dolarapi.com](https://dolarapi.com). Los meses pasados quedan con la cotización guardada. Las compras con tarjeta en cuotas caen en el mes del resumen según el día de cierre configurado.
+El mes actual usa la cotización en vivo de [dolarapi.com](https://dolarapi.com). Los meses pasados quedan con la cotización guardada. Las compras con tarjeta de crédito (en un pago o en cuotas) cuentan en el mes en que se pagan: al cargarlas elegís si impactan el mes que viene o el siguiente. Las suscripciones pueden cobrarse cada 1, 2, 3, 6 o 12 meses y, en los meses en que cobran, cuentan como gasto fijo del presupuesto.

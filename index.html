@@ -2,7 +2,7 @@
 <html lang="es-AR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>Penny</title>
     <meta name="description" content="Tus finanzas personales, simples y claras." />
     <meta name="theme-color" content="#241a12" />
@@ -21,6 +21,10 @@
         document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
         document.querySelector('meta[name="theme-color"]').setAttribute('content', dark ? '#241a12' : '#f6e9d2')
       })()
+      // iOS Safari ignores user-scalable=no, so block pinch-zoom gestures explicitly.
+      document.addEventListener('gesturestart', function (event) {
+        event.preventDefault()
+      })
     </script>
   </head>
   <body>

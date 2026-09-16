@@ -62,6 +62,13 @@ export function addMonths(key: MonthKey, amount: number): MonthKey {
   return toMonthKey(Math.floor(index / 12), (index % 12) + 1)
 }
 
+/** Signed number of months from `from` to `to` */
+export function monthDiff(from: MonthKey, to: MonthKey): number {
+  const a = parseMonthKey(from)
+  const b = parseMonthKey(to)
+  return (b.year - a.year) * 12 + (b.month - a.month)
+}
+
 export function compareMonths(a: MonthKey, b: MonthKey): number {
   return a < b ? -1 : a > b ? 1 : 0
 }

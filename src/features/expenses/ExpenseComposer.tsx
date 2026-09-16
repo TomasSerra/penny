@@ -4,12 +4,14 @@ import { AnimatePresence, motion } from 'motion/react'
 import { createContext, useCallback, useContext, useId, useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { CATEGORY_BY_ID } from '@shared/catalog'
+import { addMonths, monthDiff, monthKeyOf } from '@shared/dates'
 import { buildExpenses } from '@shared/expenses'
 import { MAX_INSTALLMENTS } from '@shared/normalize'
 import { rateLabel } from '@shared/rates'
-import type { CategoryId, Currency, Expense, PaymentMethodId } from '@shared/types'
+import type { CardMonthOffset, CategoryId, Currency, Expense, PaymentMethodId } from '@shared/types'
 import { useSession } from '@/app/session'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
+import { SegmentedControl } from '@/components/common/SegmentedControl'
 import { ResponsiveModal } from '@/components/common/ResponsiveModal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,6 +23,7 @@ import { cn } from '@/lib/utils'
 import { CategoryPicker, CurrencyToggle, DateField, FieldError, FieldLabel, NecessaryPicker, PaymentPicker, Stepper } from './fields'
 
 const LAST_PAYMENT_KEY = 'penny-last-payment'
+const LAST_CARD_OFFSET_KEY = 'penny-last-card-offset'
 const QUICK_INSTALLMENTS = [1, 3, 6, 12]
 
 interface ComposerContextValue {
@@ -58,6 +61,16 @@ function lastPaymentMethod(): PaymentMethodId {
   return stored === 'credit' || stored === 'debit' || stored === 'wallet' || stored === 'cash' ? stored : 'wallet'
 }
 
+const lastCardOffset = (): CardMonthOffset => (localStorage.getItem(LAST_CARD_OFFSET_KEY) === '2' ? 2 : 1)
+
+/** Offset of an existing credit expense, from its purchase to the month its first installment is paid. */
+function cardOffsetOf(expense: Expense): CardMonthOffset | undefined {
+  const purchaseDate = expense.installment?.purchaseDate ?? expense.purchaseDate
+  if (expense.paymentMethod !== 'credit' || !purchaseDate) return undefined
+  const firstMonth = addMonths(expense.month, -((expense.installment?.number ?? 1) - 1))
+  return monthDiff(monthKeyOf(purchaseDate), firstMonth) >= 2 ? 2 : 1
+}
+
 interface ExpenseSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -65,7 +78,7 @@ interface ExpenseSheetProps {
 }
 
 function ExpenseSheet({ open, onOpenChange, expense }: ExpenseSheetProps) {
-  const { uid, settings, rate } = useSession()
+  const { uid, rate } = useSession()
   const desktop = useIsDesktop()
   const formId = useId()
   const plan = expense?.installment
@@ -77,7 +90,8 @@ function ExpenseSheet({ open, onOpenChange, expense }: ExpenseSheetProps) {
   const [category, setCategory] = useState<CategoryId | null>(expense?.category ?? null)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodId>(expense?.paymentMethod ?? lastPaymentMethod)
   const [necessary, setNecessary] = useState(expense?.necessary ?? true)
-  const [date, setDate] = useState<Date>(() => plan?.purchaseDate ?? expense?.date ?? new Date())
+  const [date, setDate] = useState<Date>(() => plan?.purchaseDate ?? expense?.purchaseDate ?? expense?.date ?? new Date())
+  const [cardMonthOffset, setCardMonthOffset] = useState<CardMonthOffset>(() => (expense && cardOffsetOf(expense)) || lastCardOffset())
   const [installments, setInstallments] = useState(plan?.total ?? 1)
   const [showErrors, setShowErrors] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -99,10 +113,11 @@ function ExpenseSheet({ open, onOpenChange, expense }: ExpenseSheetProps) {
         paymentMethod,
         necessary,
         installments: count,
+        cardMonthOffset,
       },
-      { rate: effectiveRate, closingDay: settings.cardClosingDay, source: expense?.source ?? 'app', groupId },
+      { rate: effectiveRate, source: expense?.source ?? 'app', groupId },
     )
-  }, [category, amount, effectiveRate, date, currency, description, paymentMethod, necessary, count, settings.cardClosingDay, expense?.source, groupId])
+  }, [category, amount, effectiveRate, date, currency, description, paymentMethod, necessary, count, cardMonthOffset, expense?.source, groupId])
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -121,9 +136,12 @@ function ExpenseSheet({ open, onOpenChange, expense }: ExpenseSheetProps) {
     request.catch((error: Error) => toast.error('No se pudo guardar el gasto', { description: error.message }))
 
     localStorage.setItem(LAST_PAYMENT_KEY, paymentMethod)
+    if (paymentMethod === 'credit') localStorage.setItem(LAST_CARD_OFFSET_KEY, String(cardMonthOffset))
     const item = CATEGORY_BY_ID[category]
     toast.success(expense ? 'Gasto actualizado' : 'Gasto cargado', {
-      description: `${formatMoney(amount, currency)} · ${item.label}${count > 1 ? ` · ${count} cuotas` : ''}`,
+      description: `${formatMoney(amount, currency)} · ${item.label}${count > 1 ? ` · ${count} cuotas` : ''}${
+        paymentMethod === 'credit' ? ` · se paga en ${formatMonth(drafts[0].month, { year: false }).toLowerCase()}` : ''
+      }`,
     })
     onOpenChange(false)
   }
@@ -228,7 +246,19 @@ function ExpenseSheet({ open, onOpenChange, expense }: ExpenseSheetProps) {
                 transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                 className="-mx-1 -mb-1.5 overflow-hidden px-1 pb-1.5"
               >
-                <FieldLabel>Cuotas</FieldLabel>
+                <FieldLabel>¿Cuándo lo pagás?</FieldLabel>
+                <SegmentedControl<string>
+                  stretch
+                  value={String(cardMonthOffset)}
+                  onChange={(value) => setCardMonthOffset(value === '2' ? 2 : 1)}
+                  options={([1, 2] as const).map((offset) => ({
+                    value: String(offset),
+                    label: formatMonth(addMonths(monthKeyOf(date), offset), { year: false }),
+                  }))}
+                />
+                <p className="mt-2 text-xs text-muted-foreground">El gasto cuenta en el mes en que lo pagás, no en el de la compra.</p>
+
+                <FieldLabel className="mt-5">Cuotas</FieldLabel>
                 <div className="flex flex-wrap items-center gap-2">
                   <Stepper label="Cantidad de cuotas" value={installments} onChange={setInstallments} min={1} max={MAX_INSTALLMENTS} />
                   {QUICK_INSTALLMENTS.map((option) => (
@@ -265,7 +295,7 @@ function ExpenseSheet({ open, onOpenChange, expense }: ExpenseSheetProps) {
               <NecessaryPicker value={necessary} onChange={setNecessary} />
             </div>
             <div>
-              <FieldLabel>{count > 1 ? 'Fecha de compra' : 'Fecha'}</FieldLabel>
+              <FieldLabel>{paymentMethod === 'credit' ? 'Fecha de compra' : 'Fecha'}</FieldLabel>
               <DateField value={date} onChange={setDate} />
             </div>
           </div>

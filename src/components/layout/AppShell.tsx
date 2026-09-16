@@ -57,7 +57,7 @@ export function AppShell() {
   }, [composer])
 
   return (
-    <div className="relative min-h-dvh">
+    <div className="relative flex min-h-(--app-height) flex-col">
       <AmbientBackground />
       <Sidebar />
 
@@ -66,14 +66,16 @@ export function AppShell() {
         <UserMenu compact />
       </header>
 
-      <div className="md:pl-[17rem]">
-        <main className="mx-auto w-full max-w-6xl px-4 pt-4 pb-36 sm:px-6 md:px-8 md:pt-10 md:pb-14 lg:px-10">
+      <div className="flex flex-1 flex-col md:pl-[17rem]">
+        {/* Flex column all the way down so an empty page can fill the screen instead of scrolling. */}
+        <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 pt-4 pb-[calc(env(safe-area-inset-bottom)+6.75rem)] sm:px-6 md:px-8 md:pt-10 md:pb-14 lg:px-10">
           <Suspense fallback={<PageSkeleton />}>
             <motion.div
               key={location.pathname}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+              className="flex flex-1 flex-col"
             >
               <Outlet />
             </motion.div>

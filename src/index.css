@@ -86,6 +86,9 @@
 :root {
   --radius: 1rem;
 
+  /* Full screen height. See the standalone override below. */
+  --app-height: 100dvh;
+
   /* Ink is both the outline and the text colour: everything is drawn with the same pen. */
   --ink: oklch(0.26 0.045 45);
   /* Never flips with the theme — gold is gold in both, so what sits on it stays dark. */
@@ -268,11 +271,13 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    /* No double-tap zoom; pinch-zoom is blocked in index.html. */
+    touch-action: manipulation;
   }
 
   body {
     @apply bg-background text-foreground;
-    min-height: 100dvh;
+    min-height: var(--app-height);
     overscroll-behavior-y: none;
     -webkit-tap-highlight-color: transparent;
   }
@@ -304,6 +309,20 @@
       --ink-shadow: 3px 3px 0 0 var(--ink);
       --ink-shadow-lg: 4px 4px 0 0 var(--ink);
     }
+  }
+}
+
+/*
+ * Installed iOS PWA with viewport-fit=cover: dvh/svh/100% subtract the top safe area
+ * until the first scroll, leaving a gap under the bottom nav. lvh is the real screen.
+ */
+@media (display-mode: standalone) {
+  :root {
+    --app-height: 100lvh;
+  }
+
+  html {
+    height: 100lvh;
   }
 }
 

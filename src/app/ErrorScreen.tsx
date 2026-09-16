@@ -9,7 +9,7 @@ export function ErrorScreen() {
   const notFound = isRouteErrorResponse(error) && error.status === 404
 
   return (
-    <div className="grid min-h-dvh place-items-center p-4">
+    <div className="grid min-h-(--app-height) place-items-center p-4">
       <AmbientBackground />
       <div className="paper flex w-full max-w-md flex-col items-center rounded-4xl p-8 text-center">
         <Penny pose="sad" priority className="h-36 -rotate-2" />

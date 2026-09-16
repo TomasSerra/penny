@@ -1,6 +1,6 @@
 import { findCategory, findPaymentMethod, CATEGORIES, PAYMENT_METHODS } from './catalog.js'
 import { arDate, calendarParts } from './dates.js'
-import type { CategoryId, Currency, PaymentMethodId } from './types.js'
+import type { CardMonthOffset, CategoryId, Currency, PaymentMethodId } from './types.js'
 
 export interface ExpenseInput {
   date: Date
@@ -11,6 +11,8 @@ export interface ExpenseInput {
   paymentMethod: PaymentMethodId
   necessary: boolean
   installments: number
+  /** Only for credit: 1 = paid next month, 2 = the month after */
+  cardMonthOffset: CardMonthOffset
 }
 
 export type ParseResult<T> = { ok: true; value: T } | { ok: false; error: string }
@@ -157,7 +159,7 @@ export function parseDate(input: unknown, now: Date = new Date()): Date | undefi
   return Number.isNaN(fallback.getTime()) ? undefined : fallback
 }
 
-const FIELD_ALIASES: Record<keyof Omit<ExpenseInput, 'installments'> | 'installments', string[]> = {
+const FIELD_ALIASES: Record<keyof ExpenseInput, string[]> = {
   date: ['date', 'fecha'],
   amount: ['amount', 'monto', 'importe'],
   currency: ['currency', 'moneda'],
@@ -166,6 +168,7 @@ const FIELD_ALIASES: Record<keyof Omit<ExpenseInput, 'installments'> | 'installm
   paymentMethod: ['paymentMethod', 'payment_method', 'medioDePago', 'medio de pago', 'medio'],
   necessary: ['necessary', 'necesario'],
   installments: ['installments', 'cuotas'],
+  cardMonthOffset: ['cardMonthOffset', 'impacta', 'mesDePago'],
 }
 
 function pick(body: Record<string, unknown>, field: keyof typeof FIELD_ALIASES): unknown {
@@ -209,6 +212,12 @@ export function parseExpenseInput(body: unknown, now: Date = new Date()): ParseR
     return { ok: false, error: `"installments" tiene que ser un número entre 1 y ${MAX_INSTALLMENTS}` }
   }
 
+  const rawOffset = pick(data, 'cardMonthOffset')
+  const cardMonthOffset = rawOffset === undefined ? 1 : Number(rawOffset)
+  if (cardMonthOffset !== 1 && cardMonthOffset !== 2) {
+    return { ok: false, error: '"cardMonthOffset" tiene que ser 1 (mes que viene) o 2 (el siguiente)' }
+  }
+
   const rawDescription = pick(data, 'description')
   const description = (typeof rawDescription === 'string' ? rawDescription : String(rawDescription ?? ''))
     .trim()
@@ -225,6 +234,7 @@ export function parseExpenseInput(body: unknown, now: Date = new Date()): ParseR
       paymentMethod,
       necessary,
       installments: paymentMethod === 'credit' ? installments : 1,
+      cardMonthOffset,
     },
   }
 }

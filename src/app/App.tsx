@@ -7,6 +7,9 @@ import { AuthProvider } from './auth'
 import { router } from './router'
 import { ThemeProvider } from './theme'
 
+// Keep toasts clear of the notch / status bar in the installed PWA.
+const TOAST_OFFSET = { top: 'calc(env(safe-area-inset-top) + 16px)', right: 16, bottom: 16, left: 16 }
+
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: true } },
 })
@@ -19,7 +22,7 @@ export default function App() {
           <TooltipProvider delayDuration={300}>
             <MotionConfig reducedMotion="user">
               <RouterProvider router={router} />
-              <Toaster position="top-center" offset={16} />
+              <Toaster position="top-center" offset={TOAST_OFFSET} mobileOffset={TOAST_OFFSET} />
             </MotionConfig>
           </TooltipProvider>
         </AuthProvider>

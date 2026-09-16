@@ -13,6 +13,11 @@ import { applyCors, extractApiKey, hashApiKey, readJsonBody, sendError } from '.
 const money = (amount: number, currency: string) =>
   new Intl.NumberFormat('es-AR', { style: 'currency', currency, maximumFractionDigits: currency === 'ARS' ? 0 : 2 }).format(amount)
 
+const monthName = (month: string) => {
+  const [year, number] = month.split('-').map(Number)
+  return new Intl.DateTimeFormat('es-AR', { month: 'long', timeZone: 'UTC' }).format(new Date(Date.UTC(year, number - 1, 15)))
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (applyCors(req, res)) return
   if (req.method !== 'POST') return sendError(res, 405, 'Usá POST para cargar un gasto')
@@ -43,7 +48,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const drafts = buildExpenses(input, {
     rate,
-    closingDay: settings.cardClosingDay,
     source: 'api',
     groupId: randomUUID(),
   })
@@ -64,10 +68,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const category = CATEGORY_BY_ID[input.category]
   const installments = input.installments > 1 ? ` en ${input.installments} cuotas` : ''
+  const paidIn = input.paymentMethod === 'credit' ? `, se paga en ${monthName(drafts[0].month)}` : ''
   res.status(201).json({
     ok: true,
     id: ids[0],
     ids,
-    message: `Gasto cargado: ${money(input.amount, input.currency)} en ${category.emoji} ${category.label}${installments}`,
+    message: `Gasto cargado: ${money(input.amount, input.currency)} en ${category.emoji} ${category.label}${installments}${paidIn}`,
   })
 }

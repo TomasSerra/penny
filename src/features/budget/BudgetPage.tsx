@@ -1,14 +1,16 @@
-import { Add01Icon, Alert02Icon, Copy01Icon, Delete02Icon } from '@hugeicons/core-free-icons'
+import { Add01Icon, Alert02Icon, Copy01Icon, Delete02Icon, RepeatIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { AnimatePresence, motion } from 'motion/react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { Link } from 'react-router'
 import { toast } from 'sonner'
 import { computeBudget, copyBudget, emptyBudget } from '@shared/budget'
+import type { SubscriptionCharge } from '@shared/expenses'
 import { rateLabel } from '@shared/rates'
 import { sum, toARS } from '@shared/money'
 import type { Budget, MoneyItem, RateSnapshot } from '@shared/types'
 import { useSession } from '@/app/session'
-import { EmptyState } from '@/components/common/EmptyState'
+import { EmptyState, EmptyStateCard } from '@/components/common/EmptyState'
 import { Money } from '@/components/common/Money'
 import { MonthPicker } from '@/components/common/MonthPicker'
 import { PageHeader } from '@/components/common/PageHeader'
@@ -35,6 +37,8 @@ function ItemsSection({
   placeholder,
   rate,
   index,
+  extraTotal = 0,
+  children,
 }: {
   title: string
   description: string
@@ -43,8 +47,11 @@ function ItemsSection({
   placeholder: string
   rate: number
   index: number
+  /** Amount of the read-only rows passed as children */
+  extraTotal?: number
+  children?: ReactNode
 }) {
-  const total = sum(items.map((item) => toARS(item.amount, item.currency, rate)))
+  const total = sum(items.map((item) => toARS(item.amount, item.currency, rate))) + extraTotal
   const update = (id: string, patch: Partial<MoneyItem>) => onChange(items.map((item) => (item.id === id ? { ...item, ...patch } : item)))
 
   return (
@@ -105,7 +112,36 @@ function ItemsSection({
         <HugeiconsIcon icon={Add01Icon} strokeWidth={2.2} />
         Agregar
       </Button>
+      {children}
     </motion.section>
+  )
+}
+
+function SubscriptionCharges({ charges }: { charges: SubscriptionCharge[] }) {
+  return (
+    <div className="mt-4 border-t border-border pt-4">
+      <div className="mb-2 flex items-baseline justify-between gap-3">
+        <h3 className="text-sm font-medium">Suscripciones del mes</h3>
+        <Link to="/gastos?tab=suscripciones" className="text-xs text-penny-ink hover:underline">
+          Administrar
+        </Link>
+      </div>
+      <ul className="flex flex-col divide-y divide-border">
+        {charges.map((charge) => (
+          <li key={charge.subscriptionId} className="flex items-center gap-3 py-2 text-sm">
+            <HugeiconsIcon icon={RepeatIcon} className="size-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+            <span className="min-w-0 flex-1 truncate">{charge.name}</span>
+            {charge.projected && <span className="shrink-0 text-xs text-muted-foreground">Estimado</span>}
+            <span className="flex shrink-0 flex-col items-end">
+              <Money value={charge.amountARS} tabular className="font-medium" />
+              {charge.currency === 'USD' && (
+                <Money value={charge.amount} currency="USD" cents={!Number.isInteger(charge.amount)} className="text-xs text-muted-foreground" />
+              )}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }
 
@@ -124,7 +160,17 @@ function SavingsRow({ label, value, onChange, amount }: { label: string; value: 
   )
 }
 
-function BudgetEditor({ initial, rate, freezeRate }: { initial: Budget; rate: RateSnapshot | undefined; freezeRate: boolean }) {
+function BudgetEditor({
+  initial,
+  rate,
+  freezeRate,
+  subscriptionCharges,
+}: {
+  initial: Budget
+  rate: RateSnapshot | undefined
+  freezeRate: boolean
+  subscriptionCharges: SubscriptionCharge[]
+}) {
   const { uid } = useSession()
   const [draft, setDraft] = useState(initial)
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
@@ -154,7 +200,8 @@ function BudgetEditor({ initial, rate, freezeRate }: { initial: Budget; rate: Ra
   useEffect(() => () => flush(), [flush])
 
   const rateValue = rate?.value ?? 0
-  const summary = computeBudget(draft, rateValue)
+  const subscriptionsARS = sum(subscriptionCharges.map((charge) => charge.amountARS))
+  const summary = computeBudget(draft, rateValue, subscriptionsARS)
   const setList = (key: ListKey) => (items: MoneyItem[]) => setDraft((previous) => ({ ...previous, [key]: items }))
 
   return (
@@ -162,7 +209,18 @@ function BudgetEditor({ initial, rate, freezeRate }: { initial: Budget; rate: Ra
       <div className="flex flex-col gap-4">
         <ItemsSection index={0} title="Ingresos" description="Sueldo, freelance y todo lo que entra por mes." placeholder="Sueldo" items={draft.incomes} onChange={setList('incomes')} rate={rateValue} />
         <ItemsSection index={1} title="Deducciones" description="Monotributo, impuestos o aportes que se descuentan." placeholder="Monotributo" items={draft.deductions} onChange={setList('deductions')} rate={rateValue} />
-        <ItemsSection index={2} title="Gastos fijos" description="Lo que ya sabés que vas a pagar. Se reserva del neto." placeholder="Seguro del auto" items={draft.fixedExpenses} onChange={setList('fixedExpenses')} rate={rateValue} />
+        <ItemsSection
+          index={2}
+          title="Gastos fijos"
+          description="Lo que ya sabés que vas a pagar, suscripciones incluidas. Se reserva del neto."
+          placeholder="Seguro del auto"
+          items={draft.fixedExpenses}
+          onChange={setList('fixedExpenses')}
+          rate={rateValue}
+          extraTotal={subscriptionsARS}
+        >
+          {subscriptionCharges.length > 0 && <SubscriptionCharges charges={subscriptionCharges} />}
+        </ItemsSection>
 
         <motion.section
           initial={{ opacity: 0, y: 10 }}
@@ -230,7 +288,7 @@ function BudgetEditor({ initial, rate, freezeRate }: { initial: Budget; rate: Ra
 export default function BudgetPage() {
   const [month, setMonth] = useMonthParam()
   const { uid, rate: liveRate } = useSession()
-  const { budget, loading, rate, isPast } = useBudgetSummary(month)
+  const { budget, loading, rate, isPast, subscriptionCharges } = useBudgetSummary(month)
   const { data: previous } = usePreviousBudget(uid, month)
 
   function create(source?: Budget | null) {
@@ -250,9 +308,9 @@ export default function BudgetPage() {
           <Skeleton className="h-72 rounded-4xl" />
         </div>
       ) : budget ? (
-        <BudgetEditor key={month} initial={budget} rate={rate} freezeRate={isPast} />
+        <BudgetEditor key={month} initial={budget} rate={rate} freezeRate={isPast} subscriptionCharges={subscriptionCharges} />
       ) : (
-        <div className="paper rounded-4xl">
+        <EmptyStateCard>
           <EmptyState
             pose="rock"
             title={`Armá el presupuesto de ${formatMonth(month, { year: false }).toLowerCase()}`}
@@ -271,7 +329,7 @@ export default function BudgetPage() {
               </div>
             }
           />
-        </div>
+        </EmptyStateCard>
       )}
     </>
   )

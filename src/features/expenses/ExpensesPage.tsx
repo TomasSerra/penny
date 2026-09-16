@@ -52,7 +52,7 @@ export default function ExpensesPage() {
         }
       />
 
-      <Tabs value={tab} onValueChange={setTab} className="gap-5">
+      <Tabs value={tab} onValueChange={setTab} className="flex-1 gap-5">
         <TabsList className="w-full sm:w-auto">
           <TabsTrigger value="movimientos" className={TAB_TRIGGER}>
             <HugeiconsIcon icon={ReceiptIcon} className={TAB_ICON} strokeWidth={2} />
@@ -67,13 +67,13 @@ export default function ExpensesPage() {
             Suscripciones
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="movimientos">
+        <TabsContent value="movimientos" className="flex flex-col">
           <MovementsTab month={month} />
         </TabsContent>
-        <TabsContent value="cuotas">
+        <TabsContent value="cuotas" className="flex flex-col">
           <InstallmentsTab />
         </TabsContent>
-        <TabsContent value="suscripciones">
+        <TabsContent value="suscripciones" className="flex flex-col">
           <SubscriptionsTab />
         </TabsContent>
       </Tabs>

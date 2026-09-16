@@ -76,7 +76,9 @@ export default function DashboardPage() {
 
   const monthExpenses = useMemo(() => yearExpenses.filter((expense) => expense.month === month), [yearExpenses, month])
   const spentARS = sum(monthExpenses.map((expense) => expense.amountARS))
-  const pace = summary ? computePace({ budget: summary.variableARS, spent: spentARS, month, today: new Date() }) : null
+  // Subscriptions are already reserved as fixed expenses, so only the rest eats into the variable budget.
+  const variableSpentARS = sum(monthExpenses.filter((expense) => !expense.subscriptionId).map((expense) => expense.amountARS))
+  const pace = summary ? computePace({ budget: summary.variableARS, spent: variableSpentARS, month, today: new Date() }) : null
 
   const months = monthsBetween(`${year}-01`, `${year}-12`)
   const monthly: MonthlyDatum[] = useMemo(

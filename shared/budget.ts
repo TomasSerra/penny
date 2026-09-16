@@ -8,7 +8,9 @@ export interface BudgetSummary {
   grossARS: number
   deductionsARS: number
   netARS: number
+  /** Budgeted fixed expenses plus the subscription charges of the month */
   fixedARS: number
+  subscriptionsARS: number
   shortTermARS: number
   longTermARS: number
   /** Whatever is left after fixed expenses and savings */
@@ -25,12 +27,13 @@ function totalARS(items: MoneyItem[], rate: number): number {
 /**
  * Mirrors the original spreadsheet: savings are a % of net income and
  * variable spending is the remainder after fixed expenses and savings.
+ * Subscription charges of the month are fixed expenses too.
  */
-export function computeBudget(budget: BudgetInput, rate: number): BudgetSummary {
+export function computeBudget(budget: BudgetInput, rate: number, subscriptionsARS = 0): BudgetSummary {
   const grossARS = totalARS(budget.incomes, rate)
   const deductionsARS = totalARS(budget.deductions, rate)
   const netARS = grossARS - deductionsARS
-  const fixedARS = totalARS(budget.fixedExpenses, rate)
+  const fixedARS = totalARS(budget.fixedExpenses, rate) + subscriptionsARS
   const shortTermARS = (netARS * budget.savings.shortTermPct) / 100
   const longTermARS = (netARS * budget.savings.longTermPct) / 100
   const variableARS = netARS - fixedARS - shortTermARS - longTermARS
@@ -42,6 +45,7 @@ export function computeBudget(budget: BudgetInput, rate: number): BudgetSummary 
     deductionsARS,
     netARS,
     fixedARS,
+    subscriptionsARS,
     shortTermARS,
     longTermARS,
     variableARS,

@@ -115,7 +115,15 @@ describe('parseExpenseInput', () => {
       paymentMethod: 'wallet',
       necessary: true,
       installments: 1,
+      cardMonthOffset: 1,
     })
+  })
+
+  it('reads which month a credit purchase is paid in', () => {
+    const later = parseExpenseInput({ amount: 100, category: 'Auto', paymentMethod: 'Crédito', impacta: '2' }, now)
+    expect(later.ok && later.value.cardMonthOffset).toBe(2)
+    const invalid = parseExpenseInput({ amount: 100, category: 'Auto', paymentMethod: 'Crédito', cardMonthOffset: 3 }, now)
+    expect(invalid.ok).toBe(false)
   })
 
   it('ignores installments for non-credit payments', () => {

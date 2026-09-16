@@ -1,7 +1,6 @@
 import {
   ApiIcon,
   ComputerIcon,
-  CreditCardIcon,
   DollarCircleIcon,
   Key01Icon,
   Loading03Icon,
@@ -33,7 +32,7 @@ import { Penny } from '@/components/brand/Penny'
 import { Button } from '@/components/ui/button'
 import { rotateApiKey, updateSettings, useApiKey } from '@/data/profile'
 import { usePwaInstall } from '@/hooks/usePwaInstall'
-import { ClosingDaySelect, RatePicker } from './fields'
+import { RatePicker } from './fields'
 
 function Section({
   id,
@@ -125,24 +124,6 @@ function RateSection() {
   )
 }
 
-function CardSection() {
-  const { uid, settings } = useSession()
-  const day = settings.cardClosingDay
-  return (
-    <Section
-      index={2}
-      icon={CreditCardIcon}
-      title="Tarjeta de crédito"
-      description={`Las compras en cuotas hechas después del día ${day} empiezan a pagarse en el resumen del mes siguiente.`}
-    >
-      <div className="flex items-center justify-between gap-4">
-        <span className="text-sm">Día de cierre del resumen</span>
-        <ClosingDaySelect value={day} onChange={(next) => updateSettings(uid, { cardClosingDay: next }).catch(() => toast.error('No se pudo guardar'))} />
-      </div>
-    </Section>
-  )
-}
-
 const API_FIELDS = [
   { field: 'amount', example: '13600', note: 'Obligatorio. Acepta "$13.600" o "1.234,56".' },
   { field: 'category', example: '🍔 Comida', note: 'Obligatorio. Con o sin emoji.' },
@@ -152,6 +133,7 @@ const API_FIELDS = [
   { field: 'date', example: '15/09/2026', note: 'Opcional. Si no va, se usa ahora.' },
   { field: 'currency', example: 'ARS', note: 'Opcional, ARS o USD.' },
   { field: 'installments', example: '6', note: 'Opcional, solo con tarjeta de crédito.' },
+  { field: 'cardMonthOffset', example: '1', note: 'Opcional, solo con crédito: 1 se paga el mes que viene (por defecto), 2 el siguiente.' },
 ]
 
 const EXAMPLE_BODY = `{
@@ -191,7 +173,7 @@ function ApiSection() {
 
   return (
     <Section
-      index={3}
+      index={2}
       id="api"
       icon={ApiIcon}
       title="API para tu Atajo"
@@ -284,7 +266,7 @@ function ApiSection() {
 function InstallSection() {
   const { standalone, isIOS, canInstall, install } = usePwaInstall()
   return (
-    <Section index={4} icon={Share08Icon} title="Instalar la app" description="Usá Penny como una app más, con acceso directo y pantalla completa.">
+    <Section index={3} icon={Share08Icon} title="Instalar la app" description="Usá Penny como una app más, con acceso directo y pantalla completa.">
       <Penny pose="sunglasses" className="pointer-events-none absolute -top-12 right-5 hidden h-28 rotate-6 sm:block" />
       {standalone ? (
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -311,7 +293,7 @@ function AccountSection() {
   const { user } = useSession()
   const providers = user.providerData.map((provider) => PROVIDERS[provider.providerId] ?? provider.providerId).join(' · ')
   return (
-    <Section index={5} icon={UserCircleIcon} title="Cuenta" description={user.email ?? undefined}>
+    <Section index={4} icon={UserCircleIcon} title="Cuenta" description={user.email ?? undefined}>
       <div className="flex items-center justify-between gap-4">
         <span className="text-sm text-muted-foreground">Ingresás con {providers || 'email'}</span>
         <Button variant="outline" onClick={() => void signOut()}>
@@ -337,7 +319,6 @@ export default function SettingsPage() {
       <div className="flex max-w-3xl flex-col gap-4">
         <AppearanceSection />
         <RateSection />
-        <CardSection />
         <ApiSection />
         <InstallSection />
         <AccountSection />

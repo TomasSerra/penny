@@ -5,7 +5,6 @@ import { useId } from 'react'
 import { RATE_TYPES } from '@shared/rates'
 import type { RateConfig, RateSide } from '@shared/types'
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useQuotes } from '@/data/rates'
 import { formatMoney, formatTime } from '@/lib/format'
 import { cn } from '@/lib/utils'
@@ -70,23 +69,5 @@ export function RatePicker({ value, onChange, className }: { value: RateConfig; 
         </Button>
       </div>
     </div>
-  )
-}
-
-/** Day of the month the credit card statement closes. */
-export function ClosingDaySelect({ value, onChange }: { value: number; onChange: (day: number) => void }) {
-  return (
-    <Select value={String(value)} onValueChange={(next) => onChange(Number(next))}>
-      <SelectTrigger className="h-11 w-32 rounded-xl">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent className="max-h-72 rounded-2xl">
-        {Array.from({ length: 31 }, (_, index) => index + 1).map((option) => (
-          <SelectItem key={option} value={String(option)}>
-            Día {option}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
   )
 }

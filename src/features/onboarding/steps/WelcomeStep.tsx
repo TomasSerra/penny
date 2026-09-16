@@ -1,10 +1,9 @@
-import { CreditCardIcon, DollarCircleIcon, WalletAdd01Icon } from '@hugeicons/core-free-icons'
+import { DollarCircleIcon, WalletAdd01Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react'
 
 const AGENDA: { icon: IconSvgElement; title: string; detail: string }[] = [
   { icon: WalletAdd01Icon, title: 'Tu presupuesto', detail: 'Cuánto entra por mes y cuánto querés ahorrar.' },
   { icon: DollarCircleIcon, title: 'El dólar', detail: 'Con qué cotización convierto pesos y dólares.' },
-  { icon: CreditCardIcon, title: 'Tu tarjeta', detail: 'Cuándo cierra el resumen, para ubicar las cuotas.' },
 ]
 
 export function WelcomeStep() {
@@ -12,7 +11,7 @@ export function WelcomeStep() {
     <div>
       <h1 className="font-display text-3xl leading-tight text-balance">Hola, soy Penny</h1>
       <p className="mt-3 text-sm text-muted-foreground">
-        Te ayudo a saber cuánto podés gastar sin quedarte corto a fin de mes. Antes de arrancar necesito tres cosas, y te
+        Te ayudo a saber cuánto podés gastar sin quedarte corto a fin de mes. Antes de arrancar necesito dos cosas, y te
         explico para qué sirve cada una.
       </p>
 

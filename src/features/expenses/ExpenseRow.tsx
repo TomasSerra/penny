@@ -5,6 +5,7 @@ import { CATEGORY_BY_ID, PAYMENT_METHOD_BY_ID } from '@shared/catalog'
 import type { Expense } from '@shared/types'
 import { CategoryTile } from '@/components/common/CategoryTile'
 import { Money } from '@/components/common/Money'
+import { formatDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useExpenseComposer } from './ExpenseComposer'
 
@@ -54,6 +55,9 @@ export function ExpenseRow({
             <Tag>
               Cuota {expense.installment.number}/{expense.installment.total}
             </Tag>
+          )}
+          {!compact && expense.purchaseDate && (
+            <Tag>Compra {formatDate(expense.purchaseDate, { day: 'numeric', month: 'short' })}</Tag>
           )}
           {!compact && expense.subscriptionId && (
             <Tag>

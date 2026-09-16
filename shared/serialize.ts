@@ -22,6 +22,7 @@ export function serializeExpense(draft: ExpenseDraft): Record<string, unknown> {
 
 export function deserializeExpense(id: string, data: Record<string, unknown>): Expense {
   const expense = { ...data, id, date: toDate(data.date) } as Expense
+  if (data.purchaseDate) expense.purchaseDate = toDate(data.purchaseDate)
   if (expense.installment) {
     expense.installment = { ...expense.installment, purchaseDate: toDate(expense.installment.purchaseDate) }
   }

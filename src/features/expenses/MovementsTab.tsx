@@ -7,7 +7,7 @@ import { normalizeText } from '@shared/text'
 import type { CategoryId, Expense, MonthKey } from '@shared/types'
 import { useSession } from '@/app/session'
 import { CategoryTile } from '@/components/common/CategoryTile'
-import { EmptyState } from '@/components/common/EmptyState'
+import { EmptyState, EmptyStateCard } from '@/components/common/EmptyState'
 import { Money } from '@/components/common/Money'
 import { SegmentedControl } from '@/components/common/SegmentedControl'
 import { Button } from '@/components/ui/button'
@@ -83,7 +83,7 @@ export function MovementsTab({ month }: { month: MonthKey }) {
   const blank = !loading && expenses.length === 0
 
   return (
-    <div className="space-y-5">
+    <div className="flex flex-1 flex-col space-y-5">
       {!blank && (
         <>
           <div className="grid grid-cols-2 gap-3">
@@ -160,7 +160,7 @@ export function MovementsTab({ month }: { month: MonthKey }) {
           <Skeleton className="h-48 rounded-3xl" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="paper rounded-4xl">
+        <EmptyStateCard>
           {hasFilters ? (
             <EmptyState
               pose="surprise"
@@ -180,7 +180,7 @@ export function MovementsTab({ month }: { month: MonthKey }) {
               action={<Button onClick={() => composer.open()}>Nuevo gasto</Button>}
             />
           )}
-        </div>
+        </EmptyStateCard>
       ) : (
         <div className="space-y-5">
           {groups.map((group, groupIndex) => (

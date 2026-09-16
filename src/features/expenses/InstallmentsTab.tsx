@@ -7,7 +7,7 @@ import { sum } from '@shared/money'
 import type { Expense } from '@shared/types'
 import { useSession } from '@/app/session'
 import { CategoryTile } from '@/components/common/CategoryTile'
-import { EmptyState } from '@/components/common/EmptyState'
+import { EmptyState, EmptyStateCard } from '@/components/common/EmptyState'
 import { Money } from '@/components/common/Money'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -105,7 +105,7 @@ export function InstallmentsTab() {
 
   if (active.length === 0 && finished.length === 0) {
     return (
-      <div className="paper rounded-4xl">
+      <EmptyStateCard>
         <EmptyState
           pose="sunglasses"
           title="Sin compras en cuotas"
@@ -117,7 +117,7 @@ export function InstallmentsTab() {
             </Button>
           }
         />
-      </div>
+      </EmptyStateCard>
     )
   }
 

@@ -55,7 +55,7 @@ export function LoginPage() {
   }
 
   return (
-    <div className="relative grid min-h-dvh place-items-center px-4 py-10">
+    <div className="relative grid min-h-(--app-height) place-items-center px-4 py-10">
       <AmbientBackground />
 
       <div className="w-full max-w-sm">

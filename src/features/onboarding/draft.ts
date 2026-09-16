@@ -5,7 +5,6 @@ export interface OnboardingDraft {
   incomes: MoneyItem[]
   savings: Savings
   rate: RateConfig
-  cardClosingDay: number
 }
 
 export const newIncome = (name = ''): MoneyItem => ({ id: crypto.randomUUID(), name, amount: 0, currency: 'ARS' })

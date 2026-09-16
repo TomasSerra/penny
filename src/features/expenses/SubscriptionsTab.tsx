@@ -4,13 +4,14 @@ import { motion } from 'motion/react'
 import { useId, useState, type FormEvent } from 'react'
 import { toast } from 'sonner'
 import { CATEGORY_BY_ID, PAYMENT_METHOD_BY_ID } from '@shared/catalog'
-import { addMonths, calendarParts, monthKeyOf } from '@shared/dates'
+import { addMonths, calendarParts, monthDiff, monthKeyOf } from '@shared/dates'
+import { frequencyOf, nextChargeMonth } from '@shared/expenses'
 import { sum, toARS } from '@shared/money'
-import type { CategoryId, Currency, PaymentMethodId, Subscription } from '@shared/types'
+import type { CategoryId, Currency, MonthKey, PaymentMethodId, Subscription, SubscriptionFrequency } from '@shared/types'
 import { useSession } from '@/app/session'
 import { CategoryTile } from '@/components/common/CategoryTile'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
-import { EmptyState } from '@/components/common/EmptyState'
+import { EmptyState, EmptyStateCard } from '@/components/common/EmptyState'
 import { Money } from '@/components/common/Money'
 import { ResponsiveModal } from '@/components/common/ResponsiveModal'
 import { Button } from '@/components/ui/button'
@@ -19,10 +20,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
 import { deleteSubscription, newSubscriptionId, saveSubscription, useSubscriptions } from '@/data/subscriptions'
+import { formatMonth, formatShortMonth } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { CategoryPicker, CurrencyToggle, FieldError, FieldLabel, MoneyInput, NecessaryPicker, PaymentPicker } from './fields'
 
 const DAYS = Array.from({ length: 31 }, (_, index) => index + 1)
+
+const FREQUENCIES: { value: SubscriptionFrequency; label: string }[] = [
+  { value: 1, label: 'Mensual' },
+  { value: 2, label: 'Bimestral' },
+  { value: 3, label: 'Trimestral' },
+  { value: 6, label: 'Semestral' },
+  { value: 12, label: 'Anual' },
+]
+
+const FREQUENCY_LABEL = Object.fromEntries(FREQUENCIES.map((item) => [item.value, item.label])) as Record<SubscriptionFrequency, string>
+
+/** The next charge can be any month of the first cycle; monthly ones still get to pick this month or the next. */
+const anchorOptions = (current: MonthKey, frequency: SubscriptionFrequency) =>
+  Array.from({ length: Math.max(frequency, 2) }, (_, index) => addMonths(current, index))
 
 function SubscriptionSheet({
   open,
@@ -36,6 +52,9 @@ function SubscriptionSheet({
   const { uid } = useSession()
   const formId = useId()
   const today = calendarParts(new Date()).day
+  const currentMonth = monthKeyOf(new Date())
+  const initialFrequency = subscription ? frequencyOf(subscription) : 1
+  const initialAnchor = subscription ? nextChargeMonth(subscription, currentMonth) : currentMonth
   const [name, setName] = useState(subscription?.name ?? '')
   const [amount, setAmount] = useState(subscription?.amount ?? 0)
   const [currency, setCurrency] = useState<Currency>(subscription?.currency ?? 'ARS')
@@ -43,12 +62,18 @@ function SubscriptionSheet({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodId>(subscription?.paymentMethod ?? 'credit')
   const [necessary, setNecessary] = useState(subscription?.necessary ?? false)
   const [dayOfMonth, setDayOfMonth] = useState(subscription?.dayOfMonth ?? today)
+  const [frequency, setFrequency] = useState<SubscriptionFrequency>(initialFrequency)
+  const [anchor, setAnchor] = useState<MonthKey>(initialAnchor)
   const [active, setActive] = useState(subscription?.active ?? true)
-  const [chargeThisMonth, setChargeThisMonth] = useState(true)
   const [showErrors, setShowErrors] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
-  const alreadyDue = !subscription && dayOfMonth <= today
+  const chargesNow = anchor === currentMonth && dayOfMonth < today
+
+  function changeFrequency(next: SubscriptionFrequency) {
+    setFrequency(next)
+    if (monthDiff(currentMonth, anchor) >= anchorOptions(currentMonth, next).length) setAnchor(currentMonth)
+  }
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -56,7 +81,8 @@ function SubscriptionSheet({
       setShowErrors(true)
       return
     }
-    const currentMonth = monthKeyOf(new Date())
+    // Untouched schedules keep their original start, so past charges stay part of the same cycle.
+    const unchanged = subscription && anchor === initialAnchor && frequency === initialFrequency
     const next: Subscription = {
       id: subscription?.id ?? newSubscriptionId(uid),
       name: name.trim(),
@@ -66,8 +92,9 @@ function SubscriptionSheet({
       paymentMethod,
       necessary,
       dayOfMonth,
+      frequencyMonths: frequency,
       active,
-      startMonth: subscription?.startMonth ?? (alreadyDue && !chargeThisMonth ? addMonths(currentMonth, 1) : currentMonth),
+      startMonth: unchanged ? subscription.startMonth : anchor,
       skippedMonths: subscription?.skippedMonths,
     }
     saveSubscription(uid, next).catch((error: Error) => toast.error('No se pudo guardar', { description: error.message }))
@@ -81,7 +108,7 @@ function SubscriptionSheet({
         open={open}
         onOpenChange={onOpenChange}
         title={subscription ? 'Editar suscripción' : 'Nueva suscripción'}
-        description="Se carga sola como gasto todos los meses en el día elegido."
+        description="Se carga sola como gasto fijo en los meses en que se cobra."
         footer={
           <div className="flex w-full gap-2">
             {subscription && (
@@ -110,7 +137,7 @@ function SubscriptionSheet({
           </div>
 
           <div>
-            <FieldLabel htmlFor={`${formId}-amount`}>Monto mensual</FieldLabel>
+            <FieldLabel htmlFor={`${formId}-amount`}>{frequency === 1 ? 'Monto mensual' : 'Monto por cobro'}</FieldLabel>
             <div className="flex gap-2">
               <MoneyInput id={`${formId}-amount`} value={amount} onChange={setAmount} currency={currency} className="flex-1" />
               <CurrencyToggle value={currency} onChange={setCurrency} size="md" />
@@ -118,25 +145,55 @@ function SubscriptionSheet({
             {showErrors && amount <= 0 && <FieldError>Ingresá un monto</FieldError>}
           </div>
 
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <FieldLabel>Frecuencia</FieldLabel>
+              <Select value={String(frequency)} onValueChange={(value) => changeFrequency(Number(value) as SubscriptionFrequency)}>
+                <SelectTrigger className="h-11 w-full rounded-xl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl">
+                  {FREQUENCIES.map((item) => (
+                    <SelectItem key={item.value} value={String(item.value)}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <FieldLabel>Día de cobro</FieldLabel>
+              <Select value={String(dayOfMonth)} onValueChange={(value) => setDayOfMonth(Number(value))}>
+                <SelectTrigger className="h-11 w-full rounded-xl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="max-h-72 rounded-2xl">
+                  {DAYS.map((day) => (
+                    <SelectItem key={day} value={String(day)}>
+                      Día {day}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           <div>
-            <FieldLabel>Día de cobro</FieldLabel>
-            <Select value={String(dayOfMonth)} onValueChange={(value) => setDayOfMonth(Number(value))}>
+            <FieldLabel>{subscription ? 'Próximo cobro' : 'Primer cobro'}</FieldLabel>
+            <Select value={anchor} onValueChange={setAnchor}>
               <SelectTrigger className="h-11 w-full rounded-xl">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="max-h-72 rounded-2xl">
-                {DAYS.map((day) => (
-                  <SelectItem key={day} value={String(day)}>
-                    Día {day}
+                {anchorOptions(currentMonth, frequency).map((month) => (
+                  <SelectItem key={month} value={month}>
+                    {formatMonth(month)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {alreadyDue && (
-              <label className="mt-3 flex items-center justify-between gap-3 text-sm">
-                <span className="text-muted-foreground">Registrar el cobro de este mes</span>
-                <Switch checked={chargeThisMonth} onCheckedChange={setChargeThisMonth} />
-              </label>
+            {!subscription && chargesNow && (
+              <p className="mt-2 text-xs text-muted-foreground">El día ya pasó: el cobro de este mes se registra al guardar.</p>
             )}
           </div>
 
@@ -192,19 +249,21 @@ export function SubscriptionsTab() {
 
   const openSheet = (subscription?: Subscription) => setSheet((previous) => ({ open: true, subscription, key: previous.key + 1 }))
   const monthlyTotal = sum(
-    subscriptions.filter((item) => item.active).map((item) => toARS(item.amount, item.currency, rate?.value ?? 0)),
+    subscriptions.filter((item) => item.active).map((item) => toARS(item.amount, item.currency, rate?.value ?? 0) / frequencyOf(item)),
   )
+  const currentMonth = monthKeyOf(new Date())
+  const today = calendarParts(new Date()).day
 
   return (
-    <div className="space-y-5">
+    <div className="flex flex-1 flex-col space-y-5">
       {loading ? (
         <Skeleton className="h-40 rounded-3xl" />
       ) : subscriptions.length === 0 ? (
-        <div className="paper rounded-4xl">
+        <EmptyStateCard>
           <EmptyState
             pose="base"
             title="Sin suscripciones"
-            description="Agregá Netflix, Spotify, el gimnasio o lo que pagues todos los meses y se carga solo."
+            description="Agregá Netflix, el gimnasio, un seguro anual o lo que pagues cada tantos meses y se carga solo como gasto fijo."
             action={
               <Button onClick={() => openSheet()}>
                 <HugeiconsIcon icon={Add01Icon} strokeWidth={2.2} />
@@ -212,12 +271,12 @@ export function SubscriptionsTab() {
               </Button>
             }
           />
-        </div>
+        </EmptyStateCard>
       ) : (
         <>
           <div className="flex items-end justify-between gap-3">
             <div className="paper rounded-3xl p-4 md:p-5">
-              <p className="text-xs text-muted-foreground">Por mes en suscripciones</p>
+              <p className="text-xs text-muted-foreground">Por mes en suscripciones, en promedio</p>
               <Money value={monthlyTotal} animated className="mt-1 text-2xl font-semibold md:text-3xl" />
             </div>
             <Button variant="outline" onClick={() => openSheet()}>
@@ -229,6 +288,7 @@ export function SubscriptionsTab() {
           <div className="paper divide-y divide-border overflow-hidden rounded-3xl">
             {subscriptions.map((subscription, index) => {
               const payment = PAYMENT_METHOD_BY_ID[subscription.paymentMethod]
+              const frequency = frequencyOf(subscription)
               return (
                 <motion.div
                   key={subscription.id}
@@ -242,7 +302,9 @@ export function SubscriptionsTab() {
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-medium">{subscription.name}</span>
                       <span className="block truncate text-xs text-muted-foreground">
-                        Día {subscription.dayOfMonth} · {CATEGORY_BY_ID[subscription.category]?.label} · {payment?.emoji} {payment?.label}
+                        {FREQUENCY_LABEL[frequency]}
+                        {frequency > 1 && subscription.active && ` · próx. ${formatShortMonth(nextChargeMonth(subscription, subscription.dayOfMonth < today ? addMonths(currentMonth, 1) : currentMonth))}`} · Día{' '}
+                        {subscription.dayOfMonth} · {CATEGORY_BY_ID[subscription.category]?.label} · {payment?.emoji} {payment?.label}
                       </span>
                     </span>
                     <span className="flex flex-col items-end">

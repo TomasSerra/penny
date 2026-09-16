@@ -12,7 +12,7 @@ const VARIABLES = [
 
 export function SetupScreen() {
   return (
-    <div className="grid min-h-dvh place-items-center p-4">
+    <div className="grid min-h-(--app-height) place-items-center p-4">
       <AmbientBackground />
       <div className="paper w-full max-w-lg rounded-4xl p-8">
         <Penny pose="sad" priority className="h-24" />
