@@ -1,4 +1,4 @@
-import { Add01Icon, Delete02Icon, RepeatIcon } from '@hugeicons/core-free-icons'
+import { Add01Icon, Delete02Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { motion } from 'motion/react'
 import { useId, useState, type FormEvent } from 'react'
@@ -200,9 +200,9 @@ export function SubscriptionsTab() {
       {loading ? (
         <Skeleton className="h-40 rounded-3xl" />
       ) : subscriptions.length === 0 ? (
-        <div className="glass rounded-4xl">
+        <div className="paper rounded-4xl">
           <EmptyState
-            icon={RepeatIcon}
+            pose="base"
             title="Sin suscripciones"
             description="Agregá Netflix, Spotify, el gimnasio o lo que pagues todos los meses y se carga solo."
             action={
@@ -216,7 +216,7 @@ export function SubscriptionsTab() {
       ) : (
         <>
           <div className="flex items-end justify-between gap-3">
-            <div className="glass rounded-3xl p-4 md:p-5">
+            <div className="paper rounded-3xl p-4 md:p-5">
               <p className="text-xs text-muted-foreground">Por mes en suscripciones</p>
               <Money value={monthlyTotal} animated className="mt-1 text-2xl font-semibold md:text-3xl" />
             </div>
@@ -226,7 +226,7 @@ export function SubscriptionsTab() {
             </Button>
           </div>
 
-          <div className="glass divide-y divide-border overflow-hidden rounded-3xl">
+          <div className="paper divide-y divide-border overflow-hidden rounded-3xl">
             {subscriptions.map((subscription, index) => {
               const payment = PAYMENT_METHOD_BY_ID[subscription.paymentMethod]
               return (

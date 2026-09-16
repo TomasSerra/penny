@@ -31,7 +31,7 @@ export function SegmentedControl<T extends string>({
   return (
     <div
       role="radiogroup"
-      className={cn('glass inline-flex items-center rounded-full p-1', stretch && 'flex w-full', className)}
+      className={cn('paper inline-flex items-center rounded-full p-1', stretch && 'flex w-full', className)}
     >
       {options.map((option) => {
         const selected = option.value === value
@@ -47,13 +47,13 @@ export function SegmentedControl<T extends string>({
               'relative flex items-center justify-center gap-1.5 rounded-full font-medium whitespace-nowrap transition-colors duration-200 outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
               size === 'sm' ? 'h-7 px-2.5 text-xs' : 'h-9 px-3.5 text-sm',
               stretch && 'flex-1',
-              selected ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
+              selected ? 'font-semibold text-ink-stamp' : 'text-muted-foreground hover:text-foreground',
             )}
           >
             {selected && (
               <motion.span
                 layoutId={layoutId}
-                className="absolute inset-0 rounded-full bg-background shadow-[0_1px_2px_oklch(0_0_0/0.08),0_4px_12px_-4px_oklch(0_0_0/0.12)] dark:bg-white/12"
+                className="absolute inset-0 rounded-full border-2 border-ink-stamp bg-penny"
                 transition={{ type: 'spring', bounce: 0.18, duration: 0.45 }}
               />
             )}

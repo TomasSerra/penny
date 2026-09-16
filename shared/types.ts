@@ -117,6 +117,10 @@ export interface UserSettings {
   theme: ThemePreference
   rate: RateConfig
   cardClosingDay: number
+  /** ISO timestamp of when the user finished the onboarding */
+  onboardedAt?: string
+  /** ISO timestamp of the last time they postponed it; the dashboard keeps offering it */
+  onboardingSkippedAt?: string
 }
 
 export const DEFAULT_SETTINGS: UserSettings = {

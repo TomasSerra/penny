@@ -4,9 +4,10 @@ import type { Budget, MonthKey } from '@shared/types'
 import { budgetRef, budgetsCol } from './refs'
 import { useLive } from './useSubscription'
 
-export function useBudget(uid: string, month: MonthKey) {
+/** Pass `enabled: false` to skip the listener entirely (see `useLive`). */
+export function useBudget(uid: string, month: MonthKey, { enabled = true }: { enabled?: boolean } = {}) {
   return useLive<Budget | null>(
-    `budget:${uid}:${month}`,
+    enabled ? `budget:${uid}:${month}` : null,
     (onData, onError) =>
       onSnapshot(budgetRef(uid, month), (snapshot) => onData(snapshot.exists() ? (snapshot.data() as Budget) : null), onError),
     null,

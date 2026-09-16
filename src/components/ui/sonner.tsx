@@ -30,15 +30,15 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }}
       style={
         {
-          "--normal-bg": "var(--glass-bg-strong)",
+          "--normal-bg": "var(--paper-card)",
           "--normal-text": "var(--popover-foreground)",
-          "--normal-border": "var(--glass-border)",
+          "--normal-border": "var(--ink)",
           "--border-radius": "1.25rem",
         } as React.CSSProperties
       }
       toastOptions={{
         classNames: {
-          toast: "cn-toast !shadow-(--glass-shadow) backdrop-blur-xl",
+          toast: "cn-toast !border-2 !shadow-(--ink-shadow)",
         },
       }}
       {...props}

@@ -4,8 +4,8 @@ import { AnimatePresence, motion } from 'motion/react'
 import { useState, type FormEvent } from 'react'
 import { Navigate, useLocation, useNavigate, type Location } from 'react-router'
 import { authErrorMessage, signInWithEmail, signInWithGoogle, signUpWithEmail, useAuth } from '@/app/auth'
-import { SplashScreen } from '@/app/RequireAuth'
-import { LogoMark } from '@/components/brand/Logo'
+import { SplashScreen } from '@/app/SplashScreen'
+import { Penny } from '@/components/brand/Penny'
 import { SegmentedControl } from '@/components/common/SegmentedControl'
 import { AmbientBackground } from '@/components/layout/AmbientBackground'
 import { Button } from '@/components/ui/button'
@@ -65,13 +65,10 @@ export function LoginPage() {
           transition={{ duration: 0.7, ease: EASE }}
           className="mb-8 flex flex-col items-center text-center"
         >
-          <div className="relative">
-            <div className="absolute inset-2 rounded-full bg-penny/50 blur-2xl" />
-            <motion.div animate={{ y: [0, -6, 0], rotate: [0, 4, 0] }} transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}>
-              <LogoMark className="relative size-20" />
-            </motion.div>
-          </div>
-          <h1 className="mt-6 font-display text-6xl leading-none">Penny</h1>
+          <motion.div animate={{ y: [0, -8, 0], rotate: [-2, 2, -2] }} transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}>
+            <Penny pose="base" priority className="h-36" />
+          </motion.div>
+          <h1 className="mt-4 font-display text-6xl leading-none">Penny</h1>
           <p className="mt-2 text-muted-foreground">
             Tu plata, <span className="font-semibold text-penny-ink">clara</span> y en orden.
           </p>
@@ -81,7 +78,7 @@ export function LoginPage() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.08, ease: EASE }}
-          className="glass rounded-4xl p-5 sm:p-6"
+          className="paper rounded-4xl p-5 sm:p-6"
         >
           <SegmentedControl<Mode>
             stretch

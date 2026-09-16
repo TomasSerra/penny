@@ -17,10 +17,10 @@ import {
 } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react'
 import { motion } from 'motion/react'
-import { useEffect, useId, useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useLocation } from 'react-router'
 import { toast } from 'sonner'
-import { RATE_SIDES, RATE_TYPES } from '@shared/rates'
+import { RATE_SIDES } from '@shared/rates'
 import type { RateSide, ThemePreference } from '@shared/types'
 import { signOut } from '@/app/auth'
 import { useSession } from '@/app/session'
@@ -29,13 +29,11 @@ import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { CopyButton } from '@/components/common/CopyButton'
 import { PageHeader } from '@/components/common/PageHeader'
 import { SegmentedControl } from '@/components/common/SegmentedControl'
+import { Penny } from '@/components/brand/Penny'
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { rotateApiKey, updateSettings, useApiKey } from '@/data/profile'
-import { useQuotes } from '@/data/rates'
 import { usePwaInstall } from '@/hooks/usePwaInstall'
-import { formatMoney, formatTime } from '@/lib/format'
-import { cn } from '@/lib/utils'
+import { ClosingDaySelect, RatePicker } from './fields'
 
 function Section({
   id,
@@ -60,10 +58,10 @@ function Section({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
-      className="glass scroll-mt-6 rounded-4xl p-5 md:p-6"
+      className="paper relative scroll-mt-6 rounded-4xl p-5 md:p-6"
     >
       <div className="mb-5 flex flex-wrap items-start gap-3.5">
-        <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-penny/15 text-penny-ink">
+        <span className="grid size-10 shrink-0 place-items-center rounded-2xl border-2 border-ink-stamp bg-penny text-ink-stamp">
           <HugeiconsIcon icon={icon} className="size-5" strokeWidth={1.8} />
         </span>
         <div className="min-w-0 flex-1">
@@ -101,10 +99,7 @@ function AppearanceSection() {
 
 function RateSection() {
   const { uid, settings } = useSession()
-  const { data: quotes, isFetching, refetch, dataUpdatedAt, isError } = useQuotes()
-  const layoutId = useId()
   const side = settings.rate.side
-  const otherSide: RateSide = side === 'compra' ? 'venta' : 'compra'
 
   const save = (rate: typeof settings.rate) =>
     updateSettings(uid, { rate }).catch((error: Error) => toast.error('No se pudo guardar', { description: error.message }))
@@ -125,53 +120,7 @@ function RateSection() {
         />
       }
     >
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-        {RATE_TYPES.map((type) => {
-          const quote = quotes?.find((item) => item.casa === type.id)
-          const selected = settings.rate.type === type.id
-          const value = quote?.[side]
-          const other = quote?.[otherSide]
-          return (
-            <button
-              key={type.id}
-              type="button"
-              onClick={() => save({ ...settings.rate, type: type.id })}
-              aria-pressed={selected}
-              className={cn(
-                'relative rounded-2xl bg-foreground/[0.03] p-3.5 text-left transition-colors outline-none hover:bg-foreground/[0.05] focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-white/[0.03]',
-              )}
-            >
-              {selected && (
-                <motion.span
-                  layoutId={layoutId}
-                  transition={{ type: 'spring', bounce: 0.2, duration: 0.45 }}
-                  className="absolute inset-0 rounded-2xl bg-penny/12 ring-[1.5px] ring-penny/80 ring-inset"
-                />
-              )}
-              <span className="relative flex items-center justify-between text-xs font-medium text-muted-foreground">
-                {type.label}
-                {selected && <HugeiconsIcon icon={Tick02Icon} className="size-4 text-penny-ink" strokeWidth={2.2} />}
-              </span>
-              <span className="relative mt-1 block text-lg font-semibold">
-                {value ? formatMoney(value, 'ARS', { cents: !Number.isInteger(value) }) : '—'}
-              </span>
-              <span className="relative block text-[11px] text-muted-foreground">
-                {other ? `${otherSide === 'compra' ? 'Compra' : 'Venta'} ${formatMoney(other, 'ARS', { cents: !Number.isInteger(other) })}` : ' '}
-              </span>
-            </button>
-          )
-        })}
-      </div>
-      <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
-        <span>
-          {isError ? 'No se pudo actualizar la cotización' : 'Fuente: dolarapi.com'}
-          {dataUpdatedAt > 0 && ` · actualizado ${formatTime(new Date(dataUpdatedAt))}`}
-        </span>
-        <Button variant="ghost" size="sm" onClick={() => void refetch()} disabled={isFetching}>
-          <HugeiconsIcon icon={isFetching ? Loading03Icon : Refresh01Icon} className={isFetching ? 'animate-spin' : ''} />
-          Actualizar
-        </Button>
-      </div>
+      <RatePicker value={settings.rate} onChange={save} />
     </Section>
   )
 }
@@ -188,18 +137,7 @@ function CardSection() {
     >
       <div className="flex items-center justify-between gap-4">
         <span className="text-sm">Día de cierre del resumen</span>
-        <Select value={String(day)} onValueChange={(value) => updateSettings(uid, { cardClosingDay: Number(value) }).catch(() => toast.error('No se pudo guardar'))}>
-          <SelectTrigger className="h-11 w-32 rounded-xl">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="max-h-72 rounded-2xl">
-            {Array.from({ length: 31 }, (_, index) => index + 1).map((option) => (
-              <SelectItem key={option} value={String(option)}>
-                Día {option}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <ClosingDaySelect value={day} onChange={(next) => updateSettings(uid, { cardClosingDay: next }).catch(() => toast.error('No se pudo guardar'))} />
       </div>
     </Section>
   )
@@ -347,6 +285,7 @@ function InstallSection() {
   const { standalone, isIOS, canInstall, install } = usePwaInstall()
   return (
     <Section index={4} icon={Share08Icon} title="Instalar la app" description="Usá Penny como una app más, con acceso directo y pantalla completa.">
+      <Penny pose="sunglasses" className="pointer-events-none absolute -top-12 right-5 hidden h-28 rotate-6 sm:block" />
       {standalone ? (
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
           <HugeiconsIcon icon={Tick02Icon} className="size-4 text-success" strokeWidth={2.2} />

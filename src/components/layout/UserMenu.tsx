@@ -40,7 +40,7 @@ export function UserMenu({ compact }: { compact?: boolean }) {
   const name = useDisplayName()
 
   const avatar = (
-    <Avatar className="size-9 ring-1 ring-foreground/10">
+    <Avatar className="size-9 border-2 border-ink">
       {user.photoURL && <AvatarImage src={user.photoURL} alt="" referrerPolicy="no-referrer" />}
       <AvatarFallback className="bg-penny/20 text-xs font-semibold text-penny-ink">{initials(name)}</AvatarFallback>
     </Avatar>

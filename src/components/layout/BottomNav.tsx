@@ -47,7 +47,7 @@ export function BottomNav() {
       aria-label="Principal"
       className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] md:hidden"
     >
-      <div className="glass-strong pointer-events-auto flex h-[4.5rem] w-full max-w-md items-center rounded-full px-1.5">
+      <div className="paper-raised pointer-events-auto flex h-[4.5rem] w-full max-w-md items-center rounded-full px-1.5">
         <BottomNavItem item={first} search={search} />
         <BottomNavItem item={second} search={search} />
         <motion.button

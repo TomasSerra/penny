@@ -3,7 +3,7 @@ import { flushSync } from 'react-dom'
 import type { ThemePreference } from '@shared/types'
 
 const STORAGE_KEY = 'penny-theme'
-const THEME_COLORS = { light: '#f5f1ea', dark: '#14110e' } as const
+const THEME_COLORS = { light: '#f6e9d2', dark: '#241a12' } as const
 
 type ResolvedTheme = 'light' | 'dark'
 

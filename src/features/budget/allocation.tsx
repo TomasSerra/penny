@@ -29,14 +29,16 @@ export function AllocationBar({ summary, className }: { summary: BudgetSummary; 
   const total = rows.reduce((acc, row) => acc + row.pct, 0) || 1
 
   return (
-    <div className={cn('flex h-3.5 w-full gap-[2px]', className)} role="img" aria-label="Distribución del ingreso neto">
-      {rows.length === 0 ? (
-        <div className="h-full w-full rounded-r-[4px] bg-foreground/[0.06]" />
-      ) : (
+    <div
+      className={cn('flex h-4 w-full overflow-hidden rounded-full border-2 border-ink bg-paper-card', className)}
+      role="img"
+      aria-label="Distribución del ingreso neto"
+    >
+      {rows.length === 0 ? null : (
         rows.map((row, index) => (
           <motion.div
             key={row.key}
-            className={cn('h-full', index === rows.length - 1 && 'rounded-r-[4px]')}
+            className={cn('h-full', index > 0 && 'border-l-2 border-ink')}
             style={{ background: row.color }}
             initial={{ flexGrow: 0 }}
             animate={{ flexGrow: row.pct / total }}

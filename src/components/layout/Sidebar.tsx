@@ -16,7 +16,7 @@ export function Sidebar() {
   const search = useMonthSearch()
 
   return (
-    <aside className="glass fixed inset-y-3 left-3 z-40 hidden w-64 flex-col rounded-[1.75rem] p-3 md:flex">
+    <aside className="paper fixed inset-y-3 left-3 z-40 hidden w-64 flex-col rounded-[1.75rem] p-3 md:flex">
       <div className="px-3 pt-3 pb-7">
         <Logo />
       </div>
@@ -42,7 +42,7 @@ export function Sidebar() {
                 {isActive && (
                   <motion.span
                     layoutId="sidebar-active"
-                    className="absolute inset-0 rounded-2xl bg-foreground/[0.06] ring-1 ring-foreground/[0.04] ring-inset dark:bg-white/[0.07]"
+                    className="absolute inset-0 rounded-2xl border-2 border-ink bg-penny/20"
                     transition={NAV_SPRING}
                   />
                 )}

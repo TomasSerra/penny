@@ -1,4 +1,5 @@
-import { CreditCardIcon } from '@hugeicons/core-free-icons'
+import { Add01Icon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import { motion } from 'motion/react'
 import { useMemo } from 'react'
 import { addMonths, monthKeyOf, monthsBetween } from '@shared/dates'
@@ -8,6 +9,7 @@ import { useSession } from '@/app/session'
 import { CategoryTile } from '@/components/common/CategoryTile'
 import { EmptyState } from '@/components/common/EmptyState'
 import { Money } from '@/components/common/Money'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useInstallmentPlans } from '@/data/expenses'
 import { formatDate, formatMonth } from '@/lib/format'
@@ -42,7 +44,7 @@ function PlanCard({ plan, index }: { plan: Plan; index: number }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, delay: index * 0.04, ease: [0.16, 1, 0.3, 1] }}
       onClick={() => composer.open(first)}
-      className={cn('glass flex w-full flex-col gap-4 rounded-3xl p-5 text-left transition-transform hover:-translate-y-0.5', !plan.active && 'opacity-60')}
+      className={cn('paper flex w-full flex-col gap-4 rounded-3xl p-5 text-left transition-transform hover:-translate-y-0.5', !plan.active && 'opacity-60')}
     >
       <div className="flex items-start gap-3.5">
         <CategoryTile category={first.category} />
@@ -87,6 +89,7 @@ function PlanCard({ plan, index }: { plan: Plan; index: number }) {
 
 export function InstallmentsTab() {
   const { uid } = useSession()
+  const composer = useExpenseComposer()
   const { data: firsts, loading } = useInstallmentPlans(uid)
   const current = monthKeyOf(new Date())
 
@@ -102,11 +105,17 @@ export function InstallmentsTab() {
 
   if (active.length === 0 && finished.length === 0) {
     return (
-      <div className="glass rounded-4xl">
+      <div className="paper rounded-4xl">
         <EmptyState
-          icon={CreditCardIcon}
+          pose="sunglasses"
           title="Sin compras en cuotas"
-          description="Cuando cargues un gasto con tarjeta de crédito en cuotas, vas a ver acá cuánto te queda por pagar."
+          description="Cargá un gasto con tarjeta de crédito y elegí en cuántas cuotas lo pagás. Acá vas a ver cuánto falta de cada plan y cuánto pesan este mes."
+          action={
+            <Button onClick={() => composer.open()}>
+              <HugeiconsIcon icon={Add01Icon} strokeWidth={2.2} />
+              Cargar una compra en cuotas
+            </Button>
+          }
         />
       </div>
     )
@@ -118,11 +127,11 @@ export function InstallmentsTab() {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 gap-3">
-        <div className="glass rounded-3xl p-4 md:p-5">
+        <div className="paper rounded-3xl p-4 md:p-5">
           <p className="text-xs text-muted-foreground">Cuotas este mes</p>
           <Money value={thisMonth} animated className="mt-1 text-2xl font-semibold md:text-3xl" />
         </div>
-        <div className="glass rounded-3xl p-4 md:p-5">
+        <div className="paper rounded-3xl p-4 md:p-5">
           <p className="text-xs text-muted-foreground">Falta pagar</p>
           <Money value={remaining} animated className="mt-1 text-2xl font-semibold md:text-3xl" />
         </div>
