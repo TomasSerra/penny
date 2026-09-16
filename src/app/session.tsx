@@ -1,6 +1,8 @@
 import type { User } from 'firebase/auth'
 import { createContext, useContext, useEffect, useMemo, useRef, type ReactNode } from 'react'
+import { addMonths, monthKeyOf } from '@shared/dates'
 import { DEFAULT_SETTINGS, type RateSnapshot, type UserSettings } from '@shared/types'
+import { carryOverBudget, usePreviousBudget } from '@/data/budgets'
 import { saveLastRate, useProfile, type UserProfile } from '@/data/profile'
 import { useRate } from '@/data/rates'
 import { syncSubscriptions, useSubscriptions } from '@/data/subscriptions'
@@ -48,6 +50,20 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     // Re-run when subscriptions change or the quote type changes, not on every quote refresh.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uid, subscriptions, subscriptionsLoading, rate?.type, Boolean(rate)])
+
+  // A new month starts with the latest budget: copy it over as soon as the app opens.
+  const currentMonth = monthKeyOf(new Date())
+  const { data: latestBudget, loading: latestBudgetLoading } = usePreviousBudget(uid, addMonths(currentMonth, 1))
+  const carriedOver = useRef<string | null>(null)
+  useEffect(() => {
+    if (latestBudgetLoading || !latestBudget || latestBudget.month >= currentMonth) return
+    const attempt = `${uid}:${latestBudget.month}:${currentMonth}`
+    if (carriedOver.current === attempt) return
+    carriedOver.current = attempt
+    carryOverBudget(uid, latestBudget, currentMonth, rate).catch((error) => console.warn('[budgets] carry over', error))
+    // The quote is only stamped on the copy; it changing is no reason to copy again.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uid, latestBudget, latestBudgetLoading, currentMonth])
 
   // A new device adopts the theme saved on the account.
   const themeAdopted = useRef(false)

@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import { Suspense, useEffect } from 'react'
+import { Suspense, useEffect, useLayoutEffect } from 'react'
 import { Outlet, useLocation, useSearchParams } from 'react-router'
 import { Logo } from '@/components/brand/Logo'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -30,6 +30,11 @@ export function AppShell() {
   const location = useLocation()
   const composer = useExpenseComposer()
   const [params, setParams] = useSearchParams()
+
+  // The window is the scroller, so it keeps the previous tab's offset unless reset.
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+  }, [location.pathname])
 
   // PWA home-screen shortcut: /?nuevo=1
   useEffect(() => {

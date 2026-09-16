@@ -1,10 +1,10 @@
-import { Add01Icon, Alert02Icon, Copy01Icon, Delete02Icon, RepeatIcon } from '@hugeicons/core-free-icons'
+import { Add01Icon, Alert02Icon, Delete02Icon, RepeatIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { toast } from 'sonner'
-import { computeBudget, copyBudget, emptyBudget } from '@shared/budget'
+import { computeBudget, emptyBudget } from '@shared/budget'
 import type { SubscriptionCharge } from '@shared/expenses'
 import { rateLabel } from '@shared/rates'
 import { sum, toARS } from '@shared/money'
@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Slider } from '@/components/ui/slider'
-import { saveBudget, usePreviousBudget } from '@/data/budgets'
+import { saveBudget } from '@/data/budgets'
 import { CurrencyToggle, MoneyInput } from '@/features/expenses/fields'
 import { useMonthParam } from '@/hooks/useMonthParam'
 import { formatMoney, formatMonth, formatPercent } from '@/lib/format'
@@ -164,11 +164,14 @@ function BudgetEditor({
   initial,
   rate,
   freezeRate,
+  inherited,
   subscriptionCharges,
 }: {
   initial: Budget
   rate: RateSnapshot | undefined
   freezeRate: boolean
+  /** Not saved for this month yet (a future month showing the latest budget): saved once edited. */
+  inherited: boolean
   subscriptionCharges: SubscriptionCharge[]
 }) {
   const { uid } = useSession()
@@ -176,6 +179,8 @@ function BudgetEditor({
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
   const pending = useRef<Budget | null>(null)
   const firstRender = useRef(true)
+  // An inherited budget is only saved once edited, even if its own copy shows up meanwhile.
+  const untouched = useRef({ draft: initial, inherited })
 
   const flush = useCallback(() => {
     const budget = pending.current
@@ -190,6 +195,7 @@ function BudgetEditor({
       firstRender.current = false
       return
     }
+    if (untouched.current.inherited && draft === untouched.current.draft) return
     // The current month keeps the latest quote; past months keep the one they closed with.
     pending.current = !freezeRate && rate ? { ...draft, rateSnapshot: rate } : draft
     setStatus('saving')
@@ -288,11 +294,10 @@ function BudgetEditor({
 export default function BudgetPage() {
   const [month, setMonth] = useMonthParam()
   const { uid, rate: liveRate } = useSession()
-  const { budget, loading, rate, isPast, subscriptionCharges } = useBudgetSummary(month)
-  const { data: previous } = usePreviousBudget(uid, month)
+  const { budget, inheritedFrom, loading, rate, isPast, subscriptionCharges } = useBudgetSummary(month)
 
-  function create(source?: Budget | null) {
-    const next = source ? copyBudget(source, month) : { ...emptyBudget(month), incomes: [newItem('Sueldo')] }
+  function create() {
+    const next = { ...emptyBudget(month), incomes: [newItem('Sueldo')] }
     saveBudget(uid, liveRate ? { ...next, rateSnapshot: liveRate } : next).catch((error: Error) =>
       toast.error('No se pudo crear el presupuesto', { description: error.message }),
     )
@@ -308,26 +313,22 @@ export default function BudgetPage() {
           <Skeleton className="h-72 rounded-4xl" />
         </div>
       ) : budget ? (
-        <BudgetEditor key={month} initial={budget} rate={rate} freezeRate={isPast} subscriptionCharges={subscriptionCharges} />
+        <>
+          {inheritedFrom && (
+            <p className="mb-4 text-sm text-muted-foreground">
+              Es el mismo de {formatMonth(inheritedFrom, { year: false }).toLowerCase()}. Si lo cambiás, se guarda solo para{' '}
+              {formatMonth(month, { year: false }).toLowerCase()}.
+            </p>
+          )}
+          <BudgetEditor key={month} initial={budget} rate={rate} freezeRate={isPast} inherited={Boolean(inheritedFrom)} subscriptionCharges={subscriptionCharges} />
+        </>
       ) : (
         <EmptyStateCard>
           <EmptyState
             pose="rock"
             title={`Armá el presupuesto de ${formatMonth(month, { year: false }).toLowerCase()}`}
             description="Cargá tus ingresos, gastos fijos y cuánto querés ahorrar. Penny calcula cuánto te queda para gastar."
-            action={
-              <div className="flex flex-col gap-2 sm:flex-row">
-                {previous && (
-                  <Button onClick={() => create(previous)}>
-                    <HugeiconsIcon icon={Copy01Icon} />
-                    Copiar de {formatMonth(previous.month, { year: false }).toLowerCase()}
-                  </Button>
-                )}
-                <Button variant={previous ? 'outline' : 'default'} onClick={() => create()}>
-                  Empezar de cero
-                </Button>
-              </div>
-            }
+            action={<Button onClick={create}>Empezar</Button>}
           />
         </EmptyStateCard>
       )}

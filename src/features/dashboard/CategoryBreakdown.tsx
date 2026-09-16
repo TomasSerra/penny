@@ -105,7 +105,12 @@ export function CategoryBreakdown({ expenses, currency }: { expenses: Expense[];
       ) : (
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="relative min-h-44 flex-1">
-            <ChartContainer config={config} className="aspect-auto size-full">
+            {/* Painted before the (positioned) chart so the hover tooltip sits on top of it. */}
+            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+              <p className="text-xs text-muted-foreground">Total</p>
+              <p className="font-display text-xl tabular-nums">{formatCompact(total, currency)}</p>
+            </div>
+            <ChartContainer config={config} className="relative aspect-auto size-full">
               <PieChart margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                 <Tooltip
                   content={({ active, payload }) => {
@@ -147,10 +152,6 @@ export function CategoryBreakdown({ expenses, currency }: { expenses: Expense[];
                 </Pie>
               </PieChart>
             </ChartContainer>
-            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-              <p className="text-xs text-muted-foreground">Total</p>
-              <p className="font-display text-xl tabular-nums">{formatCompact(total, currency)}</p>
-            </div>
           </div>
 
           <ul className="mt-4 flex flex-col gap-1.5 text-sm">

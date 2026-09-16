@@ -297,6 +297,32 @@
     background: oklch(0.82 0.16 82 / 0.45);
   }
 
+  /*
+   * Touch screens: feel like a native app. No text selection, no long-press
+   * callout (link preview / "save image") and no image dragging. Fields stay editable.
+   */
+  @media (pointer: coarse) {
+    html {
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    input,
+    textarea,
+    [contenteditable="true"] {
+      -webkit-user-select: text;
+      user-select: text;
+      -webkit-touch-callout: default;
+    }
+
+    img,
+    svg,
+    a {
+      -webkit-user-drag: none;
+    }
+  }
+
   input[type="number"]::-webkit-inner-spin-button,
   input[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none;

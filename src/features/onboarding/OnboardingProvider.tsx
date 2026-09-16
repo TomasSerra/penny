@@ -3,7 +3,7 @@ import { createContext, useCallback, useContext, useLayoutEffect, useMemo, useRe
 import { monthKeyOf } from '@shared/dates'
 import { useSession } from '@/app/session'
 import { SplashScreen } from '@/app/SplashScreen'
-import { useBudget } from '@/data/budgets'
+import { useBudget, usePreviousBudget } from '@/data/budgets'
 import { OnboardingFlow } from './OnboardingFlow'
 
 interface OnboardingContextValue {
@@ -20,7 +20,11 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const done = Boolean(settings.onboardedAt)
   const postponed = Boolean(settings.onboardingSkippedAt)
   // Only an account with no onboarding mark needs this read to know whether it is a fresh one.
-  const { data: budget, loading: budgetLoading } = useBudget(uid, month, { enabled: !done && !postponed })
+  const { data: own, loading: ownLoading } = useBudget(uid, month, { enabled: !done && !postponed })
+  // A month without its own budget carries over an earlier one, so that account is set up too.
+  const { data: previous, loading: previousLoading } = usePreviousBudget(uid, month, { enabled: !done && !postponed })
+  const budget = own ?? previous
+  const budgetLoading = ownLoading || previousLoading
   // How it was opened decides whether it fades in: coming from the splash there is nothing
   // to fade from, and a fade would show the dashboard underneath for a moment.
   const [open, setOpen] = useState<'auto' | 'manual' | null>(null)
