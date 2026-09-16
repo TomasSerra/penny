@@ -86,7 +86,7 @@ export default defineConfig(({ mode }) => {
       VitePWA({
         registerType: 'autoUpdate',
         injectRegister: 'auto',
-        includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png'],
+        includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
         manifest: {
           id: '/',
           name: 'Penny',
@@ -101,17 +101,18 @@ export default defineConfig(({ mode }) => {
           theme_color: '#241a12',
           categories: ['finance'],
           icons: [
-            { src: 'pwa-64x64.png', sizes: '64x64', type: 'image/png' },
-            { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
-            { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
-            { src: 'maskable-icon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+            { src: 'favicon.ico', sizes: '16x16 32x32', type: 'image/x-icon' },
+            { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
+            { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
+            { src: 'icon-192-maskable.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
+            { src: 'icon-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
           ],
           shortcuts: [
             {
               name: 'Nuevo gasto',
               short_name: 'Nuevo gasto',
               url: '/?nuevo=1',
-              icons: [{ src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' }],
+              icons: [{ src: 'icon-192.png', sizes: '192x192', type: 'image/png' }],
             },
           ],
         },
