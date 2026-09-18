@@ -1,19 +1,21 @@
 import { Cancel01Icon, Download04Icon, FilterHorizontalIcon, Search01Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { useMemo, useState, type ReactNode } from 'react'
+import { Cell, Pie, PieChart, Tooltip as ChartTooltip } from 'recharts'
 import { toast } from 'sonner'
 import { CATEGORIES, CATEGORY_BY_ID } from '@shared/catalog'
-import { sum } from '@shared/money'
 import { normalizeText } from '@shared/text'
 import type { CategoryId, Expense, MonthKey } from '@shared/types'
 import { useSession } from '@/app/session'
 import { CategoryTile } from '@/components/common/CategoryTile'
+import { ChartTooltipBox } from '@/components/common/ChartCard'
 import { EmptyState, EmptyStateCard } from '@/components/common/EmptyState'
 import { Money } from '@/components/common/Money'
 import { MonthPicker } from '@/components/common/MonthPicker'
 import { ResponsiveModal } from '@/components/common/ResponsiveModal'
 import { SegmentedControl, type SegmentOption } from '@/components/common/SegmentedControl'
 import { Button } from '@/components/ui/button'
+import { ChartContainer, type ChartConfig } from '@/components/ui/chart'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -21,10 +23,11 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useMonthExpenses } from '@/data/expenses'
 import { useIsDesktop } from '@/hooks/useMediaQuery'
 import { expensesToCsv, saveFile } from '@/lib/csv'
-import { dayKey, formatDayLabel, formatMonth } from '@/lib/format'
+import { dayKey, formatDayLabel, formatMonth, formatMoney, formatPercent } from '@/lib/format'
 import { useExpenseComposer } from './ExpenseComposer'
 import { ExpenseRow } from './ExpenseRow'
 import { CategoryPicker, FieldLabel } from './fields'
+import { necessaryBreakdown } from './necessaryBreakdown'
 
 type NecessaryFilter = 'all' | 'yes' | 'no'
 
@@ -57,6 +60,78 @@ const NECESSARY_OPTIONS: SegmentOption<NecessaryFilter>[] = [
   { value: 'yes', label: 'Necesarios' },
   { value: 'no', label: 'No necesarios' },
 ]
+
+const NECESSARY_COLOR = 'var(--chart-1)'
+const UNNECESSARY_COLOR = 'var(--chart-2)'
+const necessaryChartConfig = {} satisfies ChartConfig
+
+interface BreakdownItem {
+  key: 'necessary' | 'unnecessary'
+  label: string
+  value: number
+  percentage: number
+  color: string
+}
+
+function BreakdownLegend({ items, className }: { items: BreakdownItem[]; className?: string }) {
+  return (
+    <ul className={className}>
+      {items.map((item) => (
+        <li key={item.key} className="flex min-w-0 items-center gap-2">
+          <span aria-hidden className="size-2.5 shrink-0 rounded-[3px]" style={{ backgroundColor: item.color }} />
+          <span className="min-w-0 flex-1 text-xs text-muted-foreground">{item.label}</span>
+          <span className="shrink-0 text-xs font-semibold tabular-nums">{formatPercent(item.percentage, 0)}</span>
+          <Money value={item.value} tabular className="shrink-0 text-sm font-semibold" />
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+function NecessaryPie({ items, total }: { items: BreakdownItem[]; total: number }) {
+  if (total === 0) return <div aria-label="Sin gastos visibles" className="size-28 shrink-0 rounded-full bg-foreground/[0.08]" />
+
+  return (
+    <ChartContainer config={necessaryChartConfig} className="size-28 shrink-0 aspect-auto" aria-label="Proporción de gastos necesarios y no necesarios">
+      <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+        <ChartTooltip
+          content={({ active, payload }) => {
+            const item = payload?.[0]?.payload as BreakdownItem | undefined
+            if (!active || !item) return null
+            return (
+              <ChartTooltipBox
+                title={item.label}
+                rows={[
+                  { label: 'Monto', value: formatMoney(item.value), color: item.color },
+                  { label: 'Del total', value: formatPercent(item.percentage, 0) },
+                ]}
+              />
+            )
+          }}
+        />
+        <Pie
+          data={items}
+          dataKey="value"
+          nameKey="label"
+          cx="50%"
+          cy="50%"
+          outerRadius="92%"
+          paddingAngle={2}
+          startAngle={90}
+          endAngle={-270}
+          stroke="var(--ink)"
+          strokeWidth={2}
+          isAnimationActive
+          animationDuration={800}
+        >
+          {items.map((item) => (
+            <Cell key={item.key} fill={item.color} className="cursor-default outline-none" />
+          ))}
+        </Pie>
+      </PieChart>
+    </ChartContainer>
+  )
+}
 
 function exportCsv(month: MonthKey, expenses: Expense[]) {
   saveFile(`penny-gastos-${month}.csv`, expensesToCsv(expenses)).catch((error: Error) =>
@@ -110,9 +185,12 @@ export function MovementsTab({ month, onMonthChange }: { month: MonthKey; onMont
   }, [expenses, search, category, necessary])
 
   const groups = useMemo(() => groupByDay(filtered), [filtered])
-  const total = sum(filtered.map((expense) => expense.amountARS))
-  const unnecessary = sum(filtered.filter((expense) => !expense.necessary).map((expense) => expense.amountARS))
-  const unnecessaryPct = total > 0 ? Math.round((unnecessary / total) * 100) : 0
+  const breakdown = useMemo(() => necessaryBreakdown(filtered), [filtered])
+  const { total, necessary: necessaryAmount, unnecessary, necessaryPct, unnecessaryPct } = breakdown
+  const breakdownItems: BreakdownItem[] = [
+    { key: 'necessary', label: 'Necesarios', value: necessaryAmount, percentage: necessaryPct, color: NECESSARY_COLOR },
+    { key: 'unnecessary', label: 'No necesarios', value: unnecessary, percentage: unnecessaryPct, color: UNNECESSARY_COLOR },
+  ]
   const activeFilters = (category !== 'all' ? 1 : 0) + (necessary !== 'all' ? 1 : 0)
   const hasFilters = Boolean(search) || activeFilters > 0
   const countLabel = `${filtered.length} ${filtered.length === 1 ? 'gasto' : 'gastos'}`
@@ -140,10 +218,12 @@ export function MovementsTab({ month, onMonthChange }: { month: MonthKey; onMont
               </p>
               <Money value={total} animated className="mt-1 text-2xl font-semibold md:text-3xl" />
             </div>
-            <div className="paper-flat rounded-3xl p-4 md:p-5">
-              <p className="text-xs text-muted-foreground">No necesarios</p>
-              <Money value={unnecessary} animated className="mt-1 text-2xl font-semibold md:text-3xl" />
-              {total > 0 && <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">{unnecessaryPct}% del total</p>}
+            <div className="paper-flat flex min-w-0 flex-col items-center gap-4 rounded-3xl p-4 lg:flex-row md:p-5">
+              <NecessaryPie items={breakdownItems} total={total} />
+              <div className="w-full min-w-0 flex-1">
+                <p className="mb-2 text-xs text-muted-foreground">Proporción del gasto</p>
+                <BreakdownLegend items={breakdownItems} className="space-y-2" />
+              </div>
             </div>
           </div>
 
@@ -189,7 +269,7 @@ export function MovementsTab({ month, onMonthChange }: { month: MonthKey; onMont
 
       {!blank && !desktop && (
         <>
-          {/* One card owns the month: which one, how much, and how much of it was avoidable. */}
+          {/* One card owns the month, its total, and how the visible spending is split. */}
           <section className="paper-flat rounded-3xl p-1.5 pb-4">
             <MonthPicker bare month={month} onChange={onMonthChange} className="flex w-full" />
             <div className="mx-3.5 mt-1.5 border-t-2 border-dashed border-foreground/15 pt-3.5">
@@ -197,15 +277,15 @@ export function MovementsTab({ month, onMonthChange }: { month: MonthKey; onMont
                 {hasFilters ? 'Total filtrado' : 'Total del mes'} · {countLabel}
               </p>
               <Money value={total} animated className="mt-0.5 text-4xl font-semibold tracking-tight" />
-              <div className="mt-3.5 h-2 overflow-hidden rounded-full bg-foreground/[0.08]">
-                <div className="h-full rounded-full bg-copper transition-[width] duration-500" style={{ width: `${unnecessaryPct}%` }} />
+              <div className="mt-3.5 flex h-2 overflow-hidden rounded-full bg-foreground/[0.08]" aria-label="Proporción de gastos necesarios y no necesarios">
+                {total > 0 && (
+                  <>
+                    <div className="h-full bg-(--chart-1) transition-[width] duration-500" style={{ width: `${necessaryPct}%` }} />
+                    <div className="h-full bg-(--chart-2) transition-[width] duration-500" style={{ width: `${unnecessaryPct}%` }} />
+                  </>
+                )}
               </div>
-              <p className="mt-1.5 flex items-baseline justify-between gap-2 text-xs text-muted-foreground">
-                <span>
-                  No necesarios · <span className="tabular-nums">{unnecessaryPct}%</span>
-                </span>
-                <Money value={unnecessary} tabular className="text-sm font-semibold text-foreground" />
-              </p>
+              <BreakdownLegend items={breakdownItems} className="mt-2.5 space-y-1.5" />
             </div>
           </section>
 
