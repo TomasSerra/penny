@@ -1,21 +1,18 @@
 import { Cancel01Icon, Download04Icon, FilterHorizontalIcon, Search01Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { useMemo, useState, type ReactNode } from 'react'
-import { Cell, Pie, PieChart, Tooltip as ChartTooltip } from 'recharts'
 import { toast } from 'sonner'
 import { CATEGORIES, CATEGORY_BY_ID } from '@shared/catalog'
 import { normalizeText } from '@shared/text'
 import type { CategoryId, Expense, MonthKey } from '@shared/types'
 import { useSession } from '@/app/session'
 import { CategoryTile } from '@/components/common/CategoryTile'
-import { ChartTooltipBox } from '@/components/common/ChartCard'
 import { EmptyState, EmptyStateCard } from '@/components/common/EmptyState'
 import { Money } from '@/components/common/Money'
 import { MonthPicker } from '@/components/common/MonthPicker'
 import { ResponsiveModal } from '@/components/common/ResponsiveModal'
 import { SegmentedControl, type SegmentOption } from '@/components/common/SegmentedControl'
 import { Button } from '@/components/ui/button'
-import { ChartContainer, type ChartConfig } from '@/components/ui/chart'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -23,7 +20,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useMonthExpenses } from '@/data/expenses'
 import { useIsDesktop } from '@/hooks/useMediaQuery'
 import { expensesToCsv, saveFile } from '@/lib/csv'
-import { dayKey, formatDayLabel, formatMonth, formatMoney, formatPercent } from '@/lib/format'
+import { dayKey, formatDayLabel, formatMonth, formatPercent } from '@/lib/format'
 import { useExpenseComposer } from './ExpenseComposer'
 import { ExpenseRow } from './ExpenseRow'
 import { CategoryPicker, FieldLabel } from './fields'
@@ -63,7 +60,6 @@ const NECESSARY_OPTIONS: SegmentOption<NecessaryFilter>[] = [
 
 const NECESSARY_COLOR = 'var(--chart-1)'
 const UNNECESSARY_COLOR = 'var(--chart-2)'
-const necessaryChartConfig = {} satisfies ChartConfig
 
 interface BreakdownItem {
   key: 'necessary' | 'unnecessary'
@@ -88,48 +84,46 @@ function BreakdownLegend({ items, className }: { items: BreakdownItem[]; classNa
   )
 }
 
-function NecessaryPie({ items, total }: { items: BreakdownItem[]; total: number }) {
-  if (total === 0) return <div aria-label="Sin gastos visibles" className="size-28 shrink-0 rounded-full bg-foreground/[0.08]" />
-
+function SpendingSummary({
+  month,
+  onMonthChange,
+  showMonth,
+  hasFilters,
+  countLabel,
+  total,
+  necessaryPct,
+  unnecessaryPct,
+  items,
+}: {
+  month: MonthKey
+  onMonthChange: (month: MonthKey) => void
+  showMonth: boolean
+  hasFilters: boolean
+  countLabel: string
+  total: number
+  necessaryPct: number
+  unnecessaryPct: number
+  items: BreakdownItem[]
+}) {
   return (
-    <ChartContainer config={necessaryChartConfig} className="size-28 shrink-0 aspect-auto" aria-label="Proporción de gastos necesarios y no necesarios">
-      <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-        <ChartTooltip
-          content={({ active, payload }) => {
-            const item = payload?.[0]?.payload as BreakdownItem | undefined
-            if (!active || !item) return null
-            return (
-              <ChartTooltipBox
-                title={item.label}
-                rows={[
-                  { label: 'Monto', value: formatMoney(item.value), color: item.color },
-                  { label: 'Del total', value: formatPercent(item.percentage, 0) },
-                ]}
-              />
-            )
-          }}
-        />
-        <Pie
-          data={items}
-          dataKey="value"
-          nameKey="label"
-          cx="50%"
-          cy="50%"
-          outerRadius="92%"
-          paddingAngle={2}
-          startAngle={90}
-          endAngle={-270}
-          stroke="var(--ink)"
-          strokeWidth={2}
-          isAnimationActive
-          animationDuration={800}
-        >
-          {items.map((item) => (
-            <Cell key={item.key} fill={item.color} className="cursor-default outline-none" />
-          ))}
-        </Pie>
-      </PieChart>
-    </ChartContainer>
+    <section className={showMonth ? 'paper-flat rounded-3xl p-1.5 pb-4' : 'paper-flat rounded-3xl p-4 md:p-5'}>
+      {showMonth && <MonthPicker bare month={month} onChange={onMonthChange} className="flex w-full" />}
+      <div className={showMonth ? 'mx-3.5 mt-1.5 border-t-2 border-dashed border-foreground/15 pt-3.5' : undefined}>
+        <p className="text-xs text-muted-foreground">
+          {hasFilters ? 'Total filtrado' : 'Total del mes'} · {countLabel}
+        </p>
+        <Money value={total} animated className={showMonth ? 'mt-0.5 text-4xl font-semibold tracking-tight' : 'mt-1 text-3xl font-semibold md:text-4xl'} />
+        <div className="mt-3.5 flex h-2 overflow-hidden rounded-full bg-foreground/[0.08]" aria-label="Proporción de gastos necesarios y no necesarios">
+          {total > 0 && (
+            <>
+              <div className="h-full bg-(--chart-1) transition-[width] duration-500" style={{ width: `${necessaryPct}%` }} />
+              <div className="h-full bg-(--chart-2) transition-[width] duration-500" style={{ width: `${unnecessaryPct}%` }} />
+            </>
+          )}
+        </div>
+        <BreakdownLegend items={items} className="mt-2.5 space-y-1.5" />
+      </div>
+    </section>
   )
 }
 
@@ -211,21 +205,17 @@ export function MovementsTab({ month, onMonthChange }: { month: MonthKey; onMont
 
       {!blank && desktop && (
         <>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="paper-flat rounded-3xl p-4 md:p-5">
-              <p className="text-xs text-muted-foreground">
-                {hasFilters ? 'Total filtrado' : 'Total del mes'} · {countLabel}
-              </p>
-              <Money value={total} animated className="mt-1 text-2xl font-semibold md:text-3xl" />
-            </div>
-            <div className="paper-flat flex min-w-0 flex-col items-center gap-4 rounded-3xl p-4 lg:flex-row md:p-5">
-              <NecessaryPie items={breakdownItems} total={total} />
-              <div className="w-full min-w-0 flex-1">
-                <p className="mb-2 text-xs text-muted-foreground">Proporción del gasto</p>
-                <BreakdownLegend items={breakdownItems} className="space-y-2" />
-              </div>
-            </div>
-          </div>
+          <SpendingSummary
+            month={month}
+            onMonthChange={onMonthChange}
+            showMonth={false}
+            hasFilters={hasFilters}
+            countLabel={countLabel}
+            total={total}
+            necessaryPct={necessaryPct}
+            unnecessaryPct={unnecessaryPct}
+            items={breakdownItems}
+          />
 
           <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
             <SearchField value={search} onChange={setSearch} />
@@ -269,25 +259,17 @@ export function MovementsTab({ month, onMonthChange }: { month: MonthKey; onMont
 
       {!blank && !desktop && (
         <>
-          {/* One card owns the month, its total, and how the visible spending is split. */}
-          <section className="paper-flat rounded-3xl p-1.5 pb-4">
-            <MonthPicker bare month={month} onChange={onMonthChange} className="flex w-full" />
-            <div className="mx-3.5 mt-1.5 border-t-2 border-dashed border-foreground/15 pt-3.5">
-              <p className="text-xs text-muted-foreground">
-                {hasFilters ? 'Total filtrado' : 'Total del mes'} · {countLabel}
-              </p>
-              <Money value={total} animated className="mt-0.5 text-4xl font-semibold tracking-tight" />
-              <div className="mt-3.5 flex h-2 overflow-hidden rounded-full bg-foreground/[0.08]" aria-label="Proporción de gastos necesarios y no necesarios">
-                {total > 0 && (
-                  <>
-                    <div className="h-full bg-(--chart-1) transition-[width] duration-500" style={{ width: `${necessaryPct}%` }} />
-                    <div className="h-full bg-(--chart-2) transition-[width] duration-500" style={{ width: `${unnecessaryPct}%` }} />
-                  </>
-                )}
-              </div>
-              <BreakdownLegend items={breakdownItems} className="mt-2.5 space-y-1.5" />
-            </div>
-          </section>
+          <SpendingSummary
+            month={month}
+            onMonthChange={onMonthChange}
+            showMonth
+            hasFilters={hasFilters}
+            countLabel={countLabel}
+            total={total}
+            necessaryPct={necessaryPct}
+            unnecessaryPct={unnecessaryPct}
+            items={breakdownItems}
+          />
 
           <div className="space-y-2.5">
             <div className="flex items-center gap-2">
